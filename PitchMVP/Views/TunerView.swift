@@ -34,8 +34,12 @@ struct TunerView: View {
                             Text("Note: \(result.note)")
                             Text("Cents: \(String(format: "%.1f", result.cents))")
                             
-                            Text(result.pass ? "✅ PASS" : "❌ FAIL")
+                            Text(result.direction)
                                 .font(.headline)
+                                .foregroundStyle(result.isInTune ? .green : .orange)
+                            Text(result.intensityHint)
+                                .font(.headline)
+                                .foregroundStyle(.red)
                         }
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
