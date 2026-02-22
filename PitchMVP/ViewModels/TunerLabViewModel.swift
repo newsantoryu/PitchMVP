@@ -14,6 +14,25 @@ final class TunerLabViewModel: ObservableObject {
         let note: String
         let cents: Double
         let pass: Bool
+
+        var direction: String {
+            if cents > 5 { return "🔽 Desça um pouco..."}
+            if cents < -5 { return "🔼 Suba um pouco..." }
+            return "🎯 Perfeito"
+        }
+
+        var isInTune: Bool {
+            abs(cents) < 5
+        }
+
+        var intensityHint: String {
+    switch abs(cents) {
+    case 0..<5: return "Excelente controle"
+    case 5..<15: return "Quase lá"
+    case 15..<30: return "Ajuste moderado"
+    default: return "Grande ajuste necessário"
+    }
+}
     }
 
     @Published var results: [PitchTestResult] = []
