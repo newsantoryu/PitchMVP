@@ -28,6 +28,10 @@
 		5783124A2F4A80570064D5F6 /* voz5.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578312492F4A80570064D5F6 /* voz5.wav */; };
 		578A36AF2F4B4DBB00A45D9C /* vozm1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578A36AE2F4B4DBA00A45D9C /* vozm1.wav */; };
 		578A36B12F4B524300A45D9C /* TunerLabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */; };
+		578A36B32F4B90D600A45D9C /* PitchFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36B22F4B90D600A45D9C /* PitchFeedback.swift */; };
+		578A36B52F4B916F00A45D9C /* MentorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36B42F4B916F00A45D9C /* MentorViewModel.swift */; };
+		578A36B72F4B93D300A45D9C /* PitchMeterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36B62F4B93D300A45D9C /* PitchMeterView.swift */; };
+		578A36B92F4B965900A45D9C /* SimulatedMentorEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36B82F4B965900A45D9C /* SimulatedMentorEngine.swift */; };
 		579D5C632F49F2C90094A862 /* PitchMVPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579D5C622F49F2C90094A862 /* PitchMVPApp.swift */; };
 		579D5C672F49F2CF0094A862 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 579D5C662F49F2CF0094A862 /* Assets.xcassets */; };
 		579D5C6A2F49F2CF0094A862 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 579D5C692F49F2CF0094A862 /* Preview Assets.xcassets */; };
@@ -76,6 +80,10 @@
 		578312492F4A80570064D5F6 /* voz5.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = voz5.wav; sourceTree = "<group>"; };
 		578A36AE2F4B4DBA00A45D9C /* vozm1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = vozm1.wav; sourceTree = "<group>"; };
 		578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerLabViewModel.swift; sourceTree = "<group>"; };
+		578A36B22F4B90D600A45D9C /* PitchFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchFeedback.swift; sourceTree = "<group>"; };
+		578A36B42F4B916F00A45D9C /* MentorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MentorViewModel.swift; sourceTree = "<group>"; };
+		578A36B62F4B93D300A45D9C /* PitchMeterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchMeterView.swift; sourceTree = "<group>"; };
+		578A36B82F4B965900A45D9C /* SimulatedMentorEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedMentorEngine.swift; sourceTree = "<group>"; };
 		579D5C5F2F49F2C90094A862 /* PitchMVP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PitchMVP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		579D5C622F49F2C90094A862 /* PitchMVPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchMVPApp.swift; sourceTree = "<group>"; };
 		579D5C662F49F2CF0094A862 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -117,6 +125,7 @@
 			children = (
 				5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */,
 				5783122A2F4A321E0064D5F6 /* OfflineAudioFileService.swift */,
+				578A36B82F4B965900A45D9C /* SimulatedMentorEngine.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -139,6 +148,7 @@
 			children = (
 				578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */,
 				5783122C2F4A32540064D5F6 /* TunerViewModel.swift */,
+				578A36B42F4B916F00A45D9C /* MentorViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -147,6 +157,7 @@
 			isa = PBXGroup;
 			children = (
 				5783122E2F4A326A0064D5F6 /* TunerView.swift */,
+				578A36B62F4B93D300A45D9C /* PitchMeterView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -170,6 +181,7 @@
 			isa = PBXGroup;
 			children = (
 				578312402F4A68560064D5F6 /* PitchResult.swift */,
+				578A36B22F4B90D600A45D9C /* PitchFeedback.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -377,18 +389,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				578312452F4A69110064D5F6 /* VocalPitchDetector.swift in Sources */,
+				578A36B32F4B90D600A45D9C /* PitchFeedback.swift in Sources */,
 				5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */,
 				578312252F4A317A0064D5F6 /* Windowing.swift in Sources */,
 				578312482F4A70530064D5F6 /* HPS.swift in Sources */,
 				578312412F4A68560064D5F6 /* PitchResult.swift in Sources */,
+				578A36B92F4B965900A45D9C /* SimulatedMentorEngine.swift in Sources */,
 				578312432F4A68C80064D5F6 /* MusicTheory.swift in Sources */,
 				5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */,
 				5783122D2F4A32540064D5F6 /* TunerViewModel.swift in Sources */,
+				578A36B52F4B916F00A45D9C /* MentorViewModel.swift in Sources */,
 				578312272F4A31950064D5F6 /* FrequencyEstimator.swift in Sources */,
 				578A36B12F4B524300A45D9C /* TunerLabViewModel.swift in Sources */,
 				579D5C632F49F2C90094A862 /* PitchMVPApp.swift in Sources */,
 				578312232F4A31610064D5F6 /* FFTProcessor.swift in Sources */,
 				5783122F2F4A326A0064D5F6 /* TunerView.swift in Sources */,
+				578A36B72F4B93D300A45D9C /* PitchMeterView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
