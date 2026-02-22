@@ -19,9 +19,12 @@ struct TunerView: View {
             Text(String(format: "%.2f Hz", viewModel.pitch?.frequency ?? 0.0))
                 .font(.largeTitle)
                 .bold()
+                Button("Trocar .wav") {
+               viewModel.nextItem()
+            }
             
-            Button("Analisar voz5.wav") {
-                if let url = Bundle.main.url(forResource: "voz5",
+            Button("Analisar \(viewModel.musics[viewModel.currentIndex]).wav") {
+                if let url = Bundle.main.url(forResource: viewModel.musics[viewModel.currentIndex],
                                              withExtension: "wav") {
                     viewModel.analyzeFile(url: url)
                 } else {
