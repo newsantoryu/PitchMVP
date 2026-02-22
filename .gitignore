@@ -1,6 +1,9 @@
 ## Xcode
 build/
 DerivedData/
+# Xcode user specific files
+xcuserdata/
+*.xcuserstate
 *.pbxuser
 !default.pbxuser
 *.mode1v3
