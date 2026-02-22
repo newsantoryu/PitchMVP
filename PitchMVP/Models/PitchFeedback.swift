@@ -8,8 +8,8 @@
 import Foundation
 
 struct PitchFeedback {
-    let detectedFrequency: Float
-    let targetFrequency: Float
+    let detectedFrequency: Double
+    let targetFrequency: Double
     let note: String
     let cents: Double
 

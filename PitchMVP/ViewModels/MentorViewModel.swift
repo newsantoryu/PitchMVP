@@ -9,16 +9,16 @@ import SwiftUI
 
 final class MentorViewModel: ObservableObject {
     
-    @Published var targetFrequency: Float = 440.0
+    @Published var targetFrequency: Double = 440.0
     @Published var targetNote: String = "A4"
     
     @Published var feedback: PitchFeedback?
     
-    func update(detectedFrequency: Float) {
+    func update(detectedFrequency: Double) {
         
         guard detectedFrequency > 0 else { return }
         
-        let cents = 1200 * log2(Double(detectedFrequency / targetFrequency))
+        let cents = 1200 * log2((detectedFrequency / targetFrequency))
         
         feedback = PitchFeedback(
             detectedFrequency: detectedFrequency,
