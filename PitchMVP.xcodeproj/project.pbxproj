@@ -35,6 +35,7 @@
 		578A36BB2F4B9C4F00A45D9C /* TrainingNotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36BA2F4B9C4F00A45D9C /* TrainingNotes.swift */; };
 		578A36BD2F4B9C9B00A45D9C /* SimulationMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36BC2F4B9C9B00A45D9C /* SimulationMode.swift */; };
 		578A36BF2F4B9DE300A45D9C /* MentorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36BE2F4B9DE300A45D9C /* MentorView.swift */; };
+		578A36C12F4BA12C00A45D9C /* BaseNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36C02F4BA12C00A45D9C /* BaseNote.swift */; };
 		579D5C632F49F2C90094A862 /* PitchMVPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579D5C622F49F2C90094A862 /* PitchMVPApp.swift */; };
 		579D5C672F49F2CF0094A862 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 579D5C662F49F2CF0094A862 /* Assets.xcassets */; };
 		579D5C6A2F49F2CF0094A862 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 579D5C692F49F2CF0094A862 /* Preview Assets.xcassets */; };
@@ -90,6 +91,7 @@
 		578A36BA2F4B9C4F00A45D9C /* TrainingNotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingNotes.swift; sourceTree = "<group>"; };
 		578A36BC2F4B9C9B00A45D9C /* SimulationMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulationMode.swift; sourceTree = "<group>"; };
 		578A36BE2F4B9DE300A45D9C /* MentorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MentorView.swift; sourceTree = "<group>"; };
+		578A36C02F4BA12C00A45D9C /* BaseNote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseNote.swift; sourceTree = "<group>"; };
 		579D5C5F2F49F2C90094A862 /* PitchMVP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PitchMVP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		579D5C622F49F2C90094A862 /* PitchMVPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchMVPApp.swift; sourceTree = "<group>"; };
 		579D5C662F49F2CF0094A862 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -191,6 +193,7 @@
 				578A36B22F4B90D600A45D9C /* PitchFeedback.swift */,
 				578A36BA2F4B9C4F00A45D9C /* TrainingNotes.swift */,
 				578A36BC2F4B9C9B00A45D9C /* SimulationMode.swift */,
+				578A36C02F4BA12C00A45D9C /* BaseNote.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -398,6 +401,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				578312452F4A69110064D5F6 /* VocalPitchDetector.swift in Sources */,
+				578A36C12F4BA12C00A45D9C /* BaseNote.swift in Sources */,
 				578A36B32F4B90D600A45D9C /* PitchFeedback.swift in Sources */,
 				5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */,
 				578312252F4A317A0064D5F6 /* Windowing.swift in Sources */,
