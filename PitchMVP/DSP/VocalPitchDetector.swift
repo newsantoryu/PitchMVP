@@ -1,15 +1,4 @@
-//
-//  VocalPitchDetector.swift
-//  PitchMVP
-//
-//  Created by victor on 21/02/26.
-//
-//
-//  VocalPitchDetector.swift
-//  PitchMVP
-//
-
-import SwiftUI
+import Foundation
 
 final class VocalPitchDetector {
     
@@ -21,37 +10,31 @@ final class VocalPitchDetector {
         self.fftProcessor = FFTProcessor(size: fftSize)
     }
     
-    func detect(buffer: [Float], sampleRate: Float) -> PitchResult? {
+    func detect(buffer: [Float], sampleRate: Float, expectedRange: ClosedRange<Float>? = nil) -> PitchResult? {
         
         guard buffer.count >= fftSize else { return nil }
         
-        // 🔹 Pegando frame do meio (melhor para offline)
         let startIndex = buffer.count / 2
         let safeStart = max(0, startIndex - fftSize / 2)
         var slice = Array(buffer[safeStart..<safeStart + fftSize])
         
-        // 🔹 Aplicar janela
         Windowing.applyHann(to: &slice)
         
-        // 🔹 FFT (retorna power spectrum)
         var magnitudes = fftProcessor.performFFT(input: slice)
-        
-        // 🔹 Converter power → magnitude real
         magnitudes = magnitudes.map { sqrt($0) }
         
-        // 🔹 Aplicar HPS (corrige sub-harmônico)
-        let hpsMagnitudes = HarmonicProductSpectrum.apply(
-            to: magnitudes,
-            harmonics: 3
-        )
+        let hpsMagnitudes = HarmonicProductSpectrum.apply(to: magnitudes, harmonics: 3)
         
-        // 🔹 Estimar frequência
-        guard let frequency = estimator.estimate(
+        guard var frequency = estimator.estimate(
             magnitudes: hpsMagnitudes,
             fftSize: fftSize,
             sampleRate: sampleRate
-        ) else {
-            return nil
+        ) else { return nil }
+        
+        // 🔹 Correção de subharmônicos / faixa esperada
+        if let range = expectedRange {
+            while frequency < range.lowerBound { frequency *= 2 }
+            while frequency > range.upperBound { frequency /= 2 }
         }
         
         return MusicTheory.analyze(frequency: frequency)

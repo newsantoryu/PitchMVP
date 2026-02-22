@@ -26,6 +26,8 @@
 		578312452F4A69110064D5F6 /* VocalPitchDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578312442F4A69110064D5F6 /* VocalPitchDetector.swift */; };
 		578312482F4A70530064D5F6 /* HPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578312472F4A70530064D5F6 /* HPS.swift */; };
 		5783124A2F4A80570064D5F6 /* voz5.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578312492F4A80570064D5F6 /* voz5.wav */; };
+		578A36AF2F4B4DBB00A45D9C /* vozm1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578A36AE2F4B4DBA00A45D9C /* vozm1.wav */; };
+		578A36B12F4B524300A45D9C /* TunerLabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */; };
 		579D5C632F49F2C90094A862 /* PitchMVPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579D5C622F49F2C90094A862 /* PitchMVPApp.swift */; };
 		579D5C672F49F2CF0094A862 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 579D5C662F49F2CF0094A862 /* Assets.xcassets */; };
 		579D5C6A2F49F2CF0094A862 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 579D5C692F49F2CF0094A862 /* Preview Assets.xcassets */; };
@@ -72,6 +74,8 @@
 		578312442F4A69110064D5F6 /* VocalPitchDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocalPitchDetector.swift; sourceTree = "<group>"; };
 		578312472F4A70530064D5F6 /* HPS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HPS.swift; sourceTree = "<group>"; };
 		578312492F4A80570064D5F6 /* voz5.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = voz5.wav; sourceTree = "<group>"; };
+		578A36AE2F4B4DBA00A45D9C /* vozm1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = vozm1.wav; sourceTree = "<group>"; };
+		578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerLabViewModel.swift; sourceTree = "<group>"; };
 		579D5C5F2F49F2C90094A862 /* PitchMVP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PitchMVP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		579D5C622F49F2C90094A862 /* PitchMVPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchMVPApp.swift; sourceTree = "<group>"; };
 		579D5C662F49F2CF0094A862 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -133,6 +137,7 @@
 		5783121A2F4A1AD00064D5F6 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */,
 				5783122C2F4A32540064D5F6 /* TunerViewModel.swift */,
 			);
 			path = ViewModels;
@@ -192,6 +197,7 @@
 		579D5C612F49F2C90094A862 /* PitchMVP */ = {
 			isa = PBXGroup;
 			children = (
+				578A36AE2F4B4DBA00A45D9C /* vozm1.wav */,
 				578312492F4A80570064D5F6 /* voz5.wav */,
 				578312192F4A1AC80064D5F6 /* DSP */,
 				578312182F4A1ABB0064D5F6 /* Services */,
@@ -344,6 +350,7 @@
 				5783123B2F4A582A0064D5F6 /* voz2.wav in Resources */,
 				5783123F2F4A5E360064D5F6 /* voz3.wav in Resources */,
 				579D5C6A2F49F2CF0094A862 /* Preview Assets.xcassets in Resources */,
+				578A36AF2F4B4DBB00A45D9C /* vozm1.wav in Resources */,
 				579D5C672F49F2CF0094A862 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -378,6 +385,7 @@
 				5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */,
 				5783122D2F4A32540064D5F6 /* TunerViewModel.swift in Sources */,
 				578312272F4A31950064D5F6 /* FrequencyEstimator.swift in Sources */,
+				578A36B12F4B524300A45D9C /* TunerLabViewModel.swift in Sources */,
 				579D5C632F49F2C90094A862 /* PitchMVPApp.swift in Sources */,
 				578312232F4A31610064D5F6 /* FFTProcessor.swift in Sources */,
 				5783122F2F4A326A0064D5F6 /* TunerView.swift in Sources */,
