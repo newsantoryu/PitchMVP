@@ -12,7 +12,7 @@ final class TunerViewModel: ObservableObject {
     @Published var pitch: PitchResult?
     @Published  var currentIndex = 0
 
-    let musics:[String] = ["voz", "voz2", "voz3", "voz5"] 
+    let musics:[String] = ["voz", "voz2", "vozm1", "voz3", "voz5"] 
 
     private let audioService = OfflineAudioFileService()
     private let detector = VocalPitchDetector()
