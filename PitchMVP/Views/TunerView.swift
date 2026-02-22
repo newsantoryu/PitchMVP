@@ -4,28 +4,12 @@ struct TunerView: View {
     
     @StateObject private var viewModel = TunerViewModel()
     @StateObject private var labViewModel = TunerLabViewModel()
-    @StateObject private var mentorVM = MentorViewModel()
-
-    @StateObject private var simulator = SimulatedMentorEngine()
-
-    
     
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                VStack(spacing: 30) {
-    
-    Text(mentorVM.targetNote)
-        .font(.system(size: 60, weight: .bold))
-    
-    PitchMeterView(feedback: mentorVM.feedback)
-    
-    if let cents = mentorVM.feedback?.cents {
-        Text(String(format: "%.1f cents", cents))
-            .font(.title2)
-    }
-}
-                
+              MentorView()
+              Divider()
                 // MARK: Pitch Lab
                 Text("PitchLabMode - Teste Profissional")
                     .font(.title2)
@@ -89,11 +73,6 @@ struct TunerView: View {
                 }
             }
             .padding()
-        }.onAppear(perform: {
-            simulator.start()
-    })
-    .onReceive(simulator.$simulatedFrequency) { freq in
-    mentorVM.update(detectedFrequency: freq)
-}
+        }
     }
 }
