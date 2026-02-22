@@ -90,6 +90,9 @@ struct MentorView: View {
         .onReceive(simulator.$simulatedFrequency) { freq in
             mentorVM.update(detectedFrequency: freq)
         }
+        .onDisappear {
+        simulator.stop()
+         }
     }
     
     // MARK: Direção
@@ -121,8 +124,8 @@ struct MentorView: View {
         let frequency = frequencyFor(note: selectedBaseNote, octave: selectedOctave)
         
         mentorVM.targetNote = noteName
-        mentorVM.targetFrequency = Float(frequency)
-        simulator.targetFrequency = Float(frequency)
+        mentorVM.targetFrequency = frequency
+        simulator.targetFrequency = frequency
     }
     
     // MARK: Frequency Calculation (com sustenidos)
