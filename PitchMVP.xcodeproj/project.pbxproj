@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		57039DD22F4CF5EE00AFC1E1 /* PitchLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */; };
 		578312172F4A0D660064D5F6 /* tone440.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578312162F4A0D660064D5F6 /* tone440.wav */; };
 		5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */; };
 		578312232F4A31610064D5F6 /* FFTProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578312222F4A31610064D5F6 /* FFTProcessor.swift */; };
@@ -62,6 +63,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchLabView.swift; sourceTree = "<group>"; };
 		578312162F4A0D660064D5F6 /* tone440.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = tone440.wav; sourceTree = "<group>"; };
 		5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngineService.swift; sourceTree = "<group>"; };
 		578312222F4A31610064D5F6 /* FFTProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFTProcessor.swift; sourceTree = "<group>"; };
@@ -164,6 +166,7 @@
 		578312212F4A1B8F0064D5F6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */,
 				5783122E2F4A326A0064D5F6 /* TunerView.swift */,
 				578A36B62F4B93D300A45D9C /* PitchMeterView.swift */,
 				578A36BE2F4B9DE300A45D9C /* MentorView.swift */,
@@ -409,6 +412,7 @@
 				578A36BB2F4B9C4F00A45D9C /* TrainingNotes.swift in Sources */,
 				578312412F4A68560064D5F6 /* PitchResult.swift in Sources */,
 				578A36B92F4B965900A45D9C /* SimulatedMentorEngine.swift in Sources */,
+				57039DD22F4CF5EE00AFC1E1 /* PitchLabView.swift in Sources */,
 				578312432F4A68C80064D5F6 /* MusicTheory.swift in Sources */,
 				5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */,
 				5783122D2F4A32540064D5F6 /* TunerViewModel.swift in Sources */,
@@ -584,8 +588,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"PitchMVP/Preview Content\"";
+				DEVELOPMENT_TEAM = 2QMJ94PDBF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Usado para detectar sua afina;'ao em tempo real";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -598,6 +604,10 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = br.com.PitchMVP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -612,8 +622,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"PitchMVP/Preview Content\"";
+				DEVELOPMENT_TEAM = 2QMJ94PDBF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Usado para detectar sua afina;'ao em tempo real";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -626,6 +638,10 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = br.com.PitchMVP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
