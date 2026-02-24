@@ -22,7 +22,17 @@ struct TunerView: View {
                     Label("Analisador", systemImage: "waveform")
                 }
                 .tag(2)
+                SessionHistoryView()
+                .tabItem {
+                    Label("Analisador", systemImage: "clock.arrow.circlepath")
+                }
+                .tag(3)
         }
         .tint(Color.accentColor)
     }
 }
+
+/*
+No ContentView, adicione uma 4ª aba com SessionHistoryView() e ícone clock.arrow.circlepath
+
+*/

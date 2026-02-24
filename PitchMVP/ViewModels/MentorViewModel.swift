@@ -23,6 +23,9 @@ final class MentorViewModel: ObservableObject {
     /// `nil` indica que ainda não há sinal de entrada.
     @Published var feedback: PitchFeedback?
 
+           let sessionRecorder = SessionRecorder()
+       let sessionService  = SessionHistoryService()
+
     // MARK: - Processamento
 
     /// Recebe uma frequência detectada e calcula o desvio em cents em relação ao alvo.
@@ -36,6 +39,10 @@ final class MentorViewModel: ObservableObject {
         // Positivo = agudo, Negativo = grave, 0 = afinado
         let cents = 1200 * log2(detectedFrequency / targetFrequency)
 
+               if let feedback = self.feedback {
+           sessionRecorder.record(feedback: feedback)
+       }
+
         feedback = PitchFeedback(
             detectedFrequency: detectedFrequency,
             targetFrequency: targetFrequency,
@@ -43,4 +50,14 @@ final class MentorViewModel: ObservableObject {
             cents: cents
         )
     }
+
+        // 3. Crie uma função para finalizar a sessão:
+       func finishSession() {
+           guard let session = sessionRecorder.finish(
+               targetNote: targetNote,
+               targetFrequency: targetFrequency,
+               simulationMode: "Simulado"
+           ) else { return }
+           sessionService.save(session: session)
+       }
 }

@@ -137,8 +137,12 @@ struct MentorView: View {
         }
         .onDisappear {
             simulator.stop()
+            mentorVM.finishSession()
         }
     }
+
+            // 4. Chame finishSession() no .onDisappear da MentorView
+
 
     // MARK: Helpers
 

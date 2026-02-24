@@ -10,6 +10,8 @@
 		57039DD22F4CF5EE00AFC1E1 /* PitchLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */; };
 		577970ED2F4D04EC00E879B5 /* YINDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EC2F4D04C900E879B5 /* YINDetector.swift */; };
 		577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */; };
+		577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F02F4D07F900E879B5 /* SessionHistoryService.swift */; };
+		577970F32F4D083100E879B5 /* SessionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F22F4D082500E879B5 /* SessionHistoryView.swift */; };
 		578312172F4A0D660064D5F6 /* tone440.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578312162F4A0D660064D5F6 /* tone440.wav */; };
 		5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */; };
 		5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5783122A2F4A321E0064D5F6 /* OfflineAudioFileService.swift */; };
@@ -63,6 +65,8 @@
 		57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchLabView.swift; sourceTree = "<group>"; };
 		577970EC2F4D04C900E879B5 /* YINDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YINDetector.swift; sourceTree = "<group>"; };
 		577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VocalPitchDetector+YIN.swift"; sourceTree = "<group>"; };
+		577970F02F4D07F900E879B5 /* SessionHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryService.swift; sourceTree = "<group>"; };
+		577970F22F4D082500E879B5 /* SessionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryView.swift; sourceTree = "<group>"; };
 		578312162F4A0D660064D5F6 /* tone440.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = tone440.wav; sourceTree = "<group>"; };
 		5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngineService.swift; sourceTree = "<group>"; };
 		5783122A2F4A321E0064D5F6 /* OfflineAudioFileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineAudioFileService.swift; sourceTree = "<group>"; };
@@ -129,6 +133,7 @@
 			children = (
 				5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */,
 				5783122A2F4A321E0064D5F6 /* OfflineAudioFileService.swift */,
+				577970F02F4D07F900E879B5 /* SessionHistoryService.swift */,
 				578A36B82F4B965900A45D9C /* SimulatedMentorEngine.swift */,
 			);
 			path = Services;
@@ -157,6 +162,7 @@
 		578312212F4A1B8F0064D5F6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				577970F22F4D082500E879B5 /* SessionHistoryView.swift */,
 				57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */,
 				5783122E2F4A326A0064D5F6 /* TunerView.swift */,
 				578A36B62F4B93D300A45D9C /* PitchMeterView.swift */,
@@ -403,7 +409,9 @@
 				578A36BB2F4B9C4F00A45D9C /* TrainingNotes.swift in Sources */,
 				578312412F4A68560064D5F6 /* PitchResult.swift in Sources */,
 				578A36B92F4B965900A45D9C /* SimulatedMentorEngine.swift in Sources */,
+				577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */,
 				57039DD22F4CF5EE00AFC1E1 /* PitchLabView.swift in Sources */,
+				577970F32F4D083100E879B5 /* SessionHistoryView.swift in Sources */,
 				5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */,
 				5783122D2F4A32540064D5F6 /* TunerViewModel.swift in Sources */,
 				578A36B52F4B916F00A45D9C /* MentorViewModel.swift in Sources */,
