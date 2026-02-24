@@ -5,12 +5,9 @@ struct TunerView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            MentorView()
-                .tabItem {
-                    Label("Mentor", systemImage: "music.note")
-                }
-                .tag(0)
-
+                 VoiceComparisonView()
+                .tabItem { Label("Comparar", systemImage: "arrow.triangle.2.circlepath") }
+                 .tag(0)
             PitchLabView()
                 .tabItem {
                     Label("Lab", systemImage: "waveform.path.ecg")
@@ -32,9 +29,13 @@ struct TunerView: View {
                      Label("Notas", systemImage: "music.note.list")
                 }
                .tag(4)
-            VoiceComparisonView()
-                .tabItem { Label("Comparar", systemImage: "arrow.triangle.2.circlepath") }
-                 .tag(5)
+
+                        MentorView()
+                .tabItem {
+                    Label("Mentor", systemImage: "music.note")
+                }
+                .tag(5)
+
         }
         .tint(Color.accentColor)
     }

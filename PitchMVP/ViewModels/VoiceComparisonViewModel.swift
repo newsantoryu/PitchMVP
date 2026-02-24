@@ -1,17 +1,8 @@
-//
-//  VoiceComparisonViewModel.swift
-//  PitchMVP
-//
-//  Created by victor on 24/02/26.
-//
-
-// VoiceComparisonViewModel.swift
+// VoiceComparisonViewModel+Supabase.swift
 // PitchMVP
 //
-// Orquestra o fluxo completo de comparação:
-//   1. Usuário seleciona "Minha Voz" (Bundle ou externo)
-//   2. Usuário seleciona "Referência" (Bundle ou externo)
-//   3. Toca "Comparar" → analisa referência → analisa voz → gera ComparisonResult
+// Extensão do VoiceComparisonViewModel para integrar com Supabase.
+// Substitui o VoiceComparisonViewModel.swift existente por esta versão completa.
 
 import Foundation
 import SwiftUI
@@ -20,134 +11,135 @@ final class VoiceComparisonViewModel: ObservableObject {
 
     // MARK: - Seleção de arquivos
 
-    /// Arquivo da voz do usuário (nome sem extensão se Bundle, nil se não selecionado)
-    @Published var userFileName: String? = nil
-    @Published var userFileURL: URL? = nil
+    /// Arquivo selecionado para "Minha Voz" (pode ser remoto ou local Bundle)
+    @Published var userSource: AudioSource? = nil
 
-    /// Arquivo de referência
-    @Published var referenceFileName: String? = nil
-    @Published var referenceFileURL: URL? = nil
+    /// Arquivo selecionado para "Referência"
+    @Published var referenceSource: AudioSource? = nil
 
-    // MARK: - Estado da análise
+    // MARK: - Estado
 
     @Published var state: ComparisonState = .idle
     @Published var result: ComparisonResult? = nil
-
-    // MARK: - Aba ativa (0 = Minha Voz, 1 = Referência)
     @Published var activeTab: Int = 0
 
-    // MARK: - WAVs do Bundle
+    // MARK: - Repositório Supabase
+
+    @Published var performanceFiles: [RemoteAudioFile] = []
+    @Published var referenceFiles:   [RemoteAudioFile] = []
+    @Published var isLoadingFiles = false
+    @Published var remoteLoadError: String? = nil
+
+    // MARK: - Bundle fallback (arquivos locais)
     let bundleFiles: [String] = ["voz", "voz2", "vozm1", "voz3", "voz5"]
 
     // MARK: - Dependências
+
+    private let repository  = SupabaseAudioRepository.shared
     private let audioService = OfflineAudioFileService()
     private let segmenter    = NoteSegmenter()
 
     // MARK: - Computed
 
-    var canCompare: Bool {
-        resolvedUserURL != nil && resolvedReferenceURL != nil
+    var canCompare: Bool { userSource != nil && referenceSource != nil }
+
+    var userDisplayName:  String { userSource?.displayName  ?? "Não selecionado" }
+    var refDisplayName:   String { referenceSource?.displayName ?? "Não selecionado" }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Carregar arquivos remotos
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @MainActor
+    func loadRemoteFiles() async {
+        isLoadingFiles = true
+        remoteLoadError = nil
+
+        await repository.loadAllFiles()
+
+        performanceFiles = repository.performanceFiles
+        referenceFiles   = repository.referenceFiles
+        isLoadingFiles   = repository.isLoading
+        remoteLoadError  = repository.loadError
     }
 
-    var userDisplayName: String  { userFileName ?? "Não selecionado" }
-    var refDisplayName: String   { referenceFileName ?? "Não selecionado" }
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Seleção
+    // ─────────────────────────────────────────────────────────────────────────
 
-    private var resolvedUserURL: URL? {
-        if let url = userFileURL { return url }
-        if let name = userFileName {
-            return Bundle.main.url(forResource: name, withExtension: "wav")
-        }
-        return nil
+    func selectUser(remote file: RemoteAudioFile) {
+        userSource = .remote(file)
+        withAnimation { activeTab = 1 }
     }
 
-    private var resolvedReferenceURL: URL? {
-        if let url = referenceFileURL { return url }
-        if let name = referenceFileName {
-            return Bundle.main.url(forResource: name, withExtension: "wav")
-        }
-        return nil
+    func selectReference(remote file: RemoteAudioFile) {
+        referenceSource = .remote(file)
     }
-
-    // MARK: - Seleção Bundle
 
     func selectUserFromBundle(_ name: String) {
-        userFileName = name
-        userFileURL  = nil
-        // Auto-avança para aba de referência
+        userSource = .bundle(name)
         withAnimation { activeTab = 1 }
     }
 
     func selectReferenceFromBundle(_ name: String) {
-        referenceFileName = name
-        referenceFileURL  = nil
+        referenceSource = .bundle(name)
     }
 
-    // MARK: - Seleção Externa
-
     func selectUserExternal(url: URL) {
-        userFileURL   = url
-        userFileName  = url.deletingPathExtension().lastPathComponent
+        userSource = .external(url)
         withAnimation { activeTab = 1 }
     }
 
     func selectReferenceExternal(url: URL) {
-        referenceFileURL   = url
-        referenceFileName  = url.deletingPathExtension().lastPathComponent
+        referenceSource = .external(url)
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
     // MARK: - Comparação
+    // ─────────────────────────────────────────────────────────────────────────
 
-    /// Executa o pipeline completo de comparação em background.
     func startComparison() {
-        guard let userURL = resolvedUserURL,
-              let refURL  = resolvedReferenceURL else { return }
+        guard let userSrc = userSource, let refSrc = referenceSource else { return }
 
-        state  = .analyzing(step: "Analisando referência...")
+        state  = .analyzing(step: "Preparando arquivos...")
         result = nil
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self else { return }
-
+        Task { @MainActor in
             do {
-                // ── Passo 1: analisa referência ──────────────────────────────
-                let (refSamples, refRate) = try self.audioService.loadSamples(from: refURL)
-                let refSegments = self.segmenter.analyze(samples: refSamples, sampleRate: refRate)
+                // ── Resolve URLs (baixa se necessário) ───────────────────────
+                state = .analyzing(step: "Baixando referência...")
+                let refURL = try await resolveURL(for: refSrc)
 
-                DispatchQueue.main.async {
-                    self.state = .analyzing(step: "Analisando sua voz...")
-                }
+                state = .analyzing(step: "Baixando sua voz...")
+                let userURL = try await resolveURL(for: userSrc)
 
-                // ── Passo 2: analisa voz do usuário ──────────────────────────
-                let (userSamples, userRate) = try self.audioService.loadSamples(from: userURL)
-                let userSegments = self.segmenter.analyze(samples: userSamples, sampleRate: userRate)
+                // ── Analisa referência ────────────────────────────────────────
+                state = .analyzing(step: "Analisando referência...")
+                let (refSamples, refRate) = try audioService.loadSamples(from: refURL)
+                let refSegments = segmenter.analyze(samples: refSamples, sampleRate: refRate)
 
-                DispatchQueue.main.async {
-                    self.state = .analyzing(step: "Comparando notas...")
-                }
+                // ── Analisa voz do usuário ────────────────────────────────────
+                state = .analyzing(step: "Analisando sua voz...")
+                let (userSamples, userRate) = try audioService.loadSamples(from: userURL)
+                let userSegments = segmenter.analyze(samples: userSamples, sampleRate: userRate)
 
-                // ── Passo 3: casa notas por ordem cronológica ─────────────────
-                let comparisons = self.buildComparisons(
-                    user: userSegments,
-                    reference: refSegments
-                )
+                // ── Casa por ordem cronológica ────────────────────────────────
+                state = .analyzing(step: "Comparando notas...")
+                let comparisons = buildComparisons(user: userSegments, reference: refSegments)
 
                 let compResult = ComparisonResult(
                     comparisons: comparisons,
                     userSegments: userSegments,
                     referenceSegments: refSegments,
-                    userFileName: self.userDisplayName,
-                    referenceFileName: self.refDisplayName
+                    userFileName: userDisplayName,
+                    referenceFileName: refDisplayName
                 )
 
-                DispatchQueue.main.async {
-                    self.result = compResult
-                    self.state  = compResult.totalPairs == 0 ? .empty : .done
-                }
+                result = compResult
+                state  = compResult.totalPairs == 0 ? .empty : .done
 
             } catch {
-                DispatchQueue.main.async {
-                    self.state = .error(error.localizedDescription)
-                }
+                state = .error(error.localizedDescription)
             }
         }
     }
@@ -157,23 +149,72 @@ final class VoiceComparisonViewModel: ObservableObject {
         state  = .idle
     }
 
-    // MARK: - Matching por ordem cronológica
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Resolve URL (Bundle / Remoto / Externo)
+    // ─────────────────────────────────────────────────────────────────────────
 
-    /// Emparelha segmentos pelo índice: user[0] ↔ ref[0], user[1] ↔ ref[1], ...
-    /// Se uma das listas for maior, os extras ficam com o par nil.
+    @MainActor
+    private func resolveURL(for source: AudioSource) async throws -> URL {
+        switch source {
+
+        case .bundle(let name):
+            guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else {
+                throw SupabaseStorageError.invalidURL
+            }
+            return url
+
+        case .external(let url):
+            return url
+
+        case .remote(let file):
+            // Usa cache se disponível, caso contrário baixa
+            return try await repository.download(file)
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Matching cronológico
+    // ─────────────────────────────────────────────────────────────────────────
+
     private func buildComparisons(
         user: [NoteSegment],
         reference: [NoteSegment]
     ) -> [NoteComparison] {
-
         let maxCount = max(user.count, reference.count)
-
         return (0..<maxCount).map { i in
             NoteComparison(
                 index: i,
                 userSegment:      i < user.count      ? user[i]      : nil,
                 referenceSegment: i < reference.count ? reference[i] : nil
             )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: - AudioSource
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Abstrai a origem de um arquivo de áudio — Bundle, remoto ou externo.
+enum AudioSource: Equatable {
+    case bundle(String)           // nome sem extensão no Bundle
+    case remote(RemoteAudioFile)  // arquivo do Supabase
+    case external(URL)            // arquivo importado pelo file picker
+
+    var displayName: String {
+        switch self {
+        case .bundle(let name):   return "\(name).wav"
+        case .remote(let file):   return file.displayName
+        case .external(let url):  return url.lastPathComponent
+        }
+    }
+
+    static func == (lhs: AudioSource, rhs: AudioSource) -> Bool {
+        switch (lhs, rhs) {
+        case (.bundle(let a),   .bundle(let b)):   return a == b
+        case (.remote(let a),   .remote(let b)):   return a == b
+        case (.external(let a), .external(let b)): return a == b
+        default: return false
         }
     }
 }

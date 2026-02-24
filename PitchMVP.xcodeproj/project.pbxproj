@@ -16,6 +16,10 @@
 		572FD9C92F4E3D6000DE544B /* VoiceComparisonViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C82F4E3D4300DE544B /* VoiceComparisonViewModel.swift */; };
 		572FD9CB2F4E3DB700DE544B /* NoteComparison.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9CA2F4E3DA000DE544B /* NoteComparison.swift */; };
 		572FD9CD2F4E3E3100DE544B /* OverlappedPitchCurveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */; };
+		572FD9D02F4E44D800DE544B /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9CF2F4E44C700DE544B /* SupabaseConfig.swift */; };
+		572FD9D22F4E452200DE544B /* SupabaseStorageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9D12F4E450F00DE544B /* SupabaseStorageClient.swift */; };
+		572FD9D52F4E458F00DE544B /* SupabaseAudioRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9D42F4E457D00DE544B /* SupabaseAudioRepository.swift */; };
+		572FD9D72F4E45FE00DE544B /* RemoteFilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */; };
 		577970ED2F4D04EC00E879B5 /* YINDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EC2F4D04C900E879B5 /* YINDetector.swift */; };
 		577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */; };
 		577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F02F4D07F900E879B5 /* SessionHistoryService.swift */; };
@@ -79,6 +83,11 @@
 		572FD9C82F4E3D4300DE544B /* VoiceComparisonViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceComparisonViewModel.swift; sourceTree = "<group>"; };
 		572FD9CA2F4E3DA000DE544B /* NoteComparison.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteComparison.swift; sourceTree = "<group>"; };
 		572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlappedPitchCurveView.swift; sourceTree = "<group>"; };
+		572FD9CF2F4E44C700DE544B /* SupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfig.swift; sourceTree = "<group>"; };
+		572FD9D12F4E450F00DE544B /* SupabaseStorageClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseStorageClient.swift; sourceTree = "<group>"; };
+		572FD9D42F4E457D00DE544B /* SupabaseAudioRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAudioRepository.swift; sourceTree = "<group>"; };
+		572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteFilePickerView.swift; sourceTree = "<group>"; };
+		572FD9D82F4E4C9500DE544B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		577970EC2F4D04C900E879B5 /* YINDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YINDetector.swift; sourceTree = "<group>"; };
 		577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VocalPitchDetector+YIN.swift"; sourceTree = "<group>"; };
 		577970F02F4D07F900E879B5 /* SessionHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryService.swift; sourceTree = "<group>"; };
@@ -144,6 +153,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		572FD9CE2F4E44B100DE544B /* API */ = {
+			isa = PBXGroup;
+			children = (
+				572FD9D42F4E457D00DE544B /* SupabaseAudioRepository.swift */,
+				572FD9D12F4E450F00DE544B /* SupabaseStorageClient.swift */,
+				572FD9CF2F4E44C700DE544B /* SupabaseConfig.swift */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
 		578312182F4A1ABB0064D5F6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -181,6 +200,7 @@
 		578312212F4A1B8F0064D5F6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */,
 				572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */,
 				572FD9C62F4E3CF900DE544B /* VoiceComparisonView.swift */,
 				572FD9C42F4E2AFC00DE544B /* SegmentAnalysisView.swift */,
@@ -245,6 +265,8 @@
 		579D5C612F49F2C90094A862 /* PitchMVP */ = {
 			isa = PBXGroup;
 			children = (
+				572FD9D82F4E4C9500DE544B /* Info.plist */,
+				572FD9CE2F4E44B100DE544B /* API */,
 				578A36AE2F4B4DBA00A45D9C /* vozm1.wav */,
 				578312492F4A80570064D5F6 /* voz5.wav */,
 				578312192F4A1AC80064D5F6 /* DSP */,
@@ -443,6 +465,8 @@
 				572FD9CD2F4E3E3100DE544B /* OverlappedPitchCurveView.swift in Sources */,
 				5783122D2F4A32540064D5F6 /* TunerViewModel.swift in Sources */,
 				578A36B52F4B916F00A45D9C /* MentorViewModel.swift in Sources */,
+				572FD9D72F4E45FE00DE544B /* RemoteFilePickerView.swift in Sources */,
+				572FD9D22F4E452200DE544B /* SupabaseStorageClient.swift in Sources */,
 				572FD9C12F4E2AC000DE544B /* SegmentAnalysisViewModel.swift in Sources */,
 				578A36B12F4B524300A45D9C /* TunerLabViewModel.swift in Sources */,
 				578A36BD2F4B9C9B00A45D9C /* SimulationMode.swift in Sources */,
@@ -453,6 +477,8 @@
 				578A36B72F4B93D300A45D9C /* PitchMeterView.swift in Sources */,
 				572FD9C52F4E2B0C00DE544B /* SegmentAnalysisView.swift in Sources */,
 				572FD9C32F4E2AE700DE544B /* PitchCurveView.swift in Sources */,
+				572FD9D52F4E458F00DE544B /* SupabaseAudioRepository.swift in Sources */,
+				572FD9D02F4E44D800DE544B /* SupabaseConfig.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -619,6 +645,7 @@
 				DEVELOPMENT_TEAM = 2QMJ94PDBF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PitchMVP/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Usado para detectar sua afina;'ao em tempo real";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -653,6 +680,7 @@
 				DEVELOPMENT_TEAM = 2QMJ94PDBF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PitchMVP/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Usado para detectar sua afina;'ao em tempo real";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
