@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		57039DD22F4CF5EE00AFC1E1 /* PitchLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */; };
+		572FD9BF2F4E2A8C00DE544B /* NoteSegmenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9BE2F4E2A7900DE544B /* NoteSegmenter.swift */; };
+		572FD9C12F4E2AC000DE544B /* SegmentAnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C02F4E2AB000DE544B /* SegmentAnalysisViewModel.swift */; };
+		572FD9C32F4E2AE700DE544B /* PitchCurveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */; };
+		572FD9C52F4E2B0C00DE544B /* SegmentAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C42F4E2AFC00DE544B /* SegmentAnalysisView.swift */; };
 		577970ED2F4D04EC00E879B5 /* YINDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EC2F4D04C900E879B5 /* YINDetector.swift */; };
 		577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */; };
 		577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F02F4D07F900E879B5 /* SessionHistoryService.swift */; };
@@ -63,6 +67,10 @@
 
 /* Begin PBXFileReference section */
 		57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchLabView.swift; sourceTree = "<group>"; };
+		572FD9BE2F4E2A7900DE544B /* NoteSegmenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSegmenter.swift; sourceTree = "<group>"; };
+		572FD9C02F4E2AB000DE544B /* SegmentAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentAnalysisViewModel.swift; sourceTree = "<group>"; };
+		572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchCurveView.swift; sourceTree = "<group>"; };
+		572FD9C42F4E2AFC00DE544B /* SegmentAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentAnalysisView.swift; sourceTree = "<group>"; };
 		577970EC2F4D04C900E879B5 /* YINDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YINDetector.swift; sourceTree = "<group>"; };
 		577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VocalPitchDetector+YIN.swift"; sourceTree = "<group>"; };
 		577970F02F4D07F900E879B5 /* SessionHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryService.swift; sourceTree = "<group>"; };
@@ -142,6 +150,7 @@
 		578312192F4A1AC80064D5F6 /* DSP */ = {
 			isa = PBXGroup;
 			children = (
+				572FD9BE2F4E2A7900DE544B /* NoteSegmenter.swift */,
 				577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */,
 				577970EC2F4D04C900E879B5 /* YINDetector.swift */,
 				578312472F4A70530064D5F6 /* HPS.swift */,
@@ -152,6 +161,7 @@
 		5783121A2F4A1AD00064D5F6 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				572FD9C02F4E2AB000DE544B /* SegmentAnalysisViewModel.swift */,
 				578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */,
 				5783122C2F4A32540064D5F6 /* TunerViewModel.swift */,
 				578A36B42F4B916F00A45D9C /* MentorViewModel.swift */,
@@ -162,6 +172,8 @@
 		578312212F4A1B8F0064D5F6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				572FD9C42F4E2AFC00DE544B /* SegmentAnalysisView.swift */,
+				572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */,
 				577970F22F4D082500E879B5 /* SessionHistoryView.swift */,
 				57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */,
 				5783122E2F4A326A0064D5F6 /* TunerView.swift */,
@@ -412,15 +424,19 @@
 				577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */,
 				57039DD22F4CF5EE00AFC1E1 /* PitchLabView.swift in Sources */,
 				577970F32F4D083100E879B5 /* SessionHistoryView.swift in Sources */,
+				572FD9BF2F4E2A8C00DE544B /* NoteSegmenter.swift in Sources */,
 				5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */,
 				5783122D2F4A32540064D5F6 /* TunerViewModel.swift in Sources */,
 				578A36B52F4B916F00A45D9C /* MentorViewModel.swift in Sources */,
+				572FD9C12F4E2AC000DE544B /* SegmentAnalysisViewModel.swift in Sources */,
 				578A36B12F4B524300A45D9C /* TunerLabViewModel.swift in Sources */,
 				578A36BD2F4B9C9B00A45D9C /* SimulationMode.swift in Sources */,
 				578A36BF2F4B9DE300A45D9C /* MentorView.swift in Sources */,
 				579D5C632F49F2C90094A862 /* PitchMVPApp.swift in Sources */,
 				5783122F2F4A326A0064D5F6 /* TunerView.swift in Sources */,
 				578A36B72F4B93D300A45D9C /* PitchMeterView.swift in Sources */,
+				572FD9C52F4E2B0C00DE544B /* SegmentAnalysisView.swift in Sources */,
+				572FD9C32F4E2AE700DE544B /* PitchCurveView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

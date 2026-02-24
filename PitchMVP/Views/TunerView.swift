@@ -27,6 +27,11 @@ struct TunerView: View {
                     Label("Analisador", systemImage: "clock.arrow.circlepath")
                 }
                 .tag(3)
+                SegmentAnalysisView()
+               .tabItem {
+                     Label("Notas", systemImage: "music.note.list")
+                }
+               .tag(4)
         }
         .tint(Color.accentColor)
     }

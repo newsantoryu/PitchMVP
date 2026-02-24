@@ -140,10 +140,6 @@ struct MentorView: View {
             mentorVM.finishSession()
         }
     }
-
-            // 4. Chame finishSession() no .onDisappear da MentorView
-
-
     // MARK: Helpers
 
     private func directionText(from feedback: PitchFeedback) -> String {
