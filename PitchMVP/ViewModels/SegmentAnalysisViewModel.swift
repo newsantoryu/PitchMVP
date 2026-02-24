@@ -1,15 +1,5 @@
-//
-//  SegmentAnalysisViewModel.swift
-//  PitchMVP
-//
-//  Created by victor on 24/02/26.
-//
-
 // SegmentAnalysisViewModel.swift
 // PitchMVP
-//
-// ViewModel da tela de análise segmentada por notas.
-// Coordena: importação de WAV → segmentação → publicação de resultados.
 
 import Foundation
 import SwiftUI
@@ -19,14 +9,14 @@ final class SegmentAnalysisViewModel: ObservableObject {
 
     // MARK: - Estado Publicado
 
-    /// Segmentos detectados após análise — vazio antes de qualquer importação
     @Published var segments: [NoteSegment] = []
-
-    /// Estado da análise (idle → loading → done / error)
     @Published var state: AnalysisState = .idle
-
-    /// Segmento selecionado para visualização em detalhe
     @Published var selectedSegment: NoteSegment? = nil
+    @Published var currentFileName: String = ""
+
+    // MARK: - WAVs do Bundle (mesma lista do TunerViewModel)
+
+    let bundleFiles: [String] = ["voz", "voz2", "vozm1", "voz3", "voz5"]
 
     // MARK: - Dependências
 
@@ -37,7 +27,6 @@ final class SegmentAnalysisViewModel: ObservableObject {
 
     var hasResults: Bool { !segments.isEmpty }
 
-    /// Resumo estatístico de todos os segmentos
     var summary: SegmentSummary? {
         guard !segments.isEmpty else { return nil }
         return SegmentSummary(segments: segments)
@@ -45,8 +34,17 @@ final class SegmentAnalysisViewModel: ObservableObject {
 
     // MARK: - API Pública
 
-    /// Analisa um arquivo de áudio e popula `segments`.
-    /// Roda em background thread para não bloquear a UI.
+    /// Analisa um WAV do Bundle pelo nome (sem extensão).
+    func analyzeFromBundle(named name: String) {
+        guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else {
+            state = .error("Arquivo '\(name).wav' não encontrado no Bundle.")
+            return
+        }
+        currentFileName = "\(name).wav"
+        analyze(url: url)
+    }
+
+    /// Analisa qualquer URL (Bundle ou importação externa).
     func analyze(url: URL) {
         state = .loading(progress: 0)
         segments = []
@@ -59,7 +57,7 @@ final class SegmentAnalysisViewModel: ObservableObject {
                 let (samples, sampleRate) = try self.audioService.loadSamples(from: url)
 
                 DispatchQueue.main.async {
-                    self.state = .loading(progress: 0.3)
+                    self.state = .loading(progress: 0.4)
                 }
 
                 let result = self.segmenter.analyze(samples: samples, sampleRate: sampleRate)
@@ -78,7 +76,6 @@ final class SegmentAnalysisViewModel: ObservableObject {
         }
     }
 
-    /// Seleciona um segmento específico para visualização de detalhe.
     func select(_ segment: NoteSegment) {
         withAnimation(.spring(duration: 0.3)) {
             selectedSegment = segment

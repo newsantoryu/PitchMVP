@@ -1,10 +1,3 @@
-//
-//  SegmentAnalysisView.swift
-//  PitchMVP
-//
-//  Created by victor on 24/02/26.
-//
-
 // SegmentAnalysisView.swift
 // PitchMVP
 //
@@ -30,6 +23,15 @@ struct SegmentAnalysisView: View {
 
                 VStack(spacing: 0) {
                     header
+                    // Seletor de arquivos do Bundle — sempre visível no topo
+                    BundleFileSelectorView(
+                        files: vm.bundleFiles,
+                        currentFile: vm.currentFileName
+                    ) { name in
+                        vm.analyzeFromBundle(named: name)
+                    }
+                    .padding(.bottom, 12)
+
                     content
                 }
             }
@@ -41,8 +43,8 @@ struct SegmentAnalysisView: View {
             allowsMultipleSelection: false
         ) { result in
             if case .success(let urls) = result, let url = urls.first {
-                // Obtém acesso ao Security-Scoped Resource
                 let accessing = url.startAccessingSecurityScopedResource()
+                vm.currentFileName = url.lastPathComponent
                 vm.analyze(url: url)
                 if accessing { url.stopAccessingSecurityScopedResource() }
             }
@@ -64,25 +66,21 @@ struct SegmentAnalysisView: View {
 
             Spacer()
 
+            // Importar arquivo externo (ícone discreto)
             Button {
                 showFilePicker = true
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 13, weight: .medium))
-                    Text("Importar")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(Color.primary)
-                .foregroundStyle(Color(.systemBackground))
-                .clipShape(Capsule())
+                Image(systemName: "square.and.arrow.down")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(8)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(Circle())
             }
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
-        .padding(.bottom, 20)
+        .padding(.bottom, 12)
     }
 
     // MARK: - Content Router
@@ -112,12 +110,12 @@ struct SegmentAnalysisView: View {
     // ── Estados de UI ─────────────────────────────────────────────────────────
 
     private var idleState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Spacer()
             Image(systemName: "music.note.list")
                 .font(.system(size: 48, weight: .thin))
                 .foregroundStyle(.tertiary)
-            Text("Importe um arquivo WAV")
+            Text("Selecione um arquivo acima")
                 .font(.system(size: 16, design: .rounded))
                 .foregroundStyle(.secondary)
             Text("O app detecta e analisa\ncada nota automaticamente")
@@ -545,5 +543,56 @@ private struct SegmentPill: View {
                 )
         )
         .animation(.spring(duration: 0.25), value: isSelected)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: - BundleFileSelectorView
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Seletor horizontal dos WAVs do Bundle — toque em qualquer arquivo para analisar.
+struct BundleFileSelectorView: View {
+
+    let files: [String]
+    let currentFile: String
+    let onSelect: (String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("ARQUIVOS")
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .tracking(2)
+                .foregroundStyle(.tertiary)
+                .padding(.horizontal, 20)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(files, id: \.self) { name in
+                        let isActive = currentFile == "\(name).wav"
+
+                        Button {
+                            onSelect(name)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: isActive ? "waveform" : "doc.waveform")
+                                    .font(.system(size: 12))
+                                Text("\(name).wav")
+                                    .font(.system(size: 13, weight: isActive ? .semibold : .regular,
+                                                  design: .rounded))
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(isActive ? Color.primary : Color(.secondarySystemBackground))
+                            )
+                            .foregroundStyle(isActive ? Color(.systemBackground) : Color.primary)
+                        }
+                        .animation(.spring(duration: 0.2), value: isActive)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+        }
     }
 }
