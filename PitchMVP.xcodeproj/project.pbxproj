@@ -12,6 +12,10 @@
 		572FD9C12F4E2AC000DE544B /* SegmentAnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C02F4E2AB000DE544B /* SegmentAnalysisViewModel.swift */; };
 		572FD9C32F4E2AE700DE544B /* PitchCurveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */; };
 		572FD9C52F4E2B0C00DE544B /* SegmentAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C42F4E2AFC00DE544B /* SegmentAnalysisView.swift */; };
+		572FD9C72F4E3D0700DE544B /* VoiceComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C62F4E3CF900DE544B /* VoiceComparisonView.swift */; };
+		572FD9C92F4E3D6000DE544B /* VoiceComparisonViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C82F4E3D4300DE544B /* VoiceComparisonViewModel.swift */; };
+		572FD9CB2F4E3DB700DE544B /* NoteComparison.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9CA2F4E3DA000DE544B /* NoteComparison.swift */; };
+		572FD9CD2F4E3E3100DE544B /* OverlappedPitchCurveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */; };
 		577970ED2F4D04EC00E879B5 /* YINDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EC2F4D04C900E879B5 /* YINDetector.swift */; };
 		577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */; };
 		577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F02F4D07F900E879B5 /* SessionHistoryService.swift */; };
@@ -71,6 +75,10 @@
 		572FD9C02F4E2AB000DE544B /* SegmentAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentAnalysisViewModel.swift; sourceTree = "<group>"; };
 		572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchCurveView.swift; sourceTree = "<group>"; };
 		572FD9C42F4E2AFC00DE544B /* SegmentAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentAnalysisView.swift; sourceTree = "<group>"; };
+		572FD9C62F4E3CF900DE544B /* VoiceComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceComparisonView.swift; sourceTree = "<group>"; };
+		572FD9C82F4E3D4300DE544B /* VoiceComparisonViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceComparisonViewModel.swift; sourceTree = "<group>"; };
+		572FD9CA2F4E3DA000DE544B /* NoteComparison.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteComparison.swift; sourceTree = "<group>"; };
+		572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlappedPitchCurveView.swift; sourceTree = "<group>"; };
 		577970EC2F4D04C900E879B5 /* YINDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YINDetector.swift; sourceTree = "<group>"; };
 		577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VocalPitchDetector+YIN.swift"; sourceTree = "<group>"; };
 		577970F02F4D07F900E879B5 /* SessionHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryService.swift; sourceTree = "<group>"; };
@@ -161,6 +169,7 @@
 		5783121A2F4A1AD00064D5F6 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				572FD9C82F4E3D4300DE544B /* VoiceComparisonViewModel.swift */,
 				572FD9C02F4E2AB000DE544B /* SegmentAnalysisViewModel.swift */,
 				578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */,
 				5783122C2F4A32540064D5F6 /* TunerViewModel.swift */,
@@ -172,6 +181,8 @@
 		578312212F4A1B8F0064D5F6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */,
+				572FD9C62F4E3CF900DE544B /* VoiceComparisonView.swift */,
 				572FD9C42F4E2AFC00DE544B /* SegmentAnalysisView.swift */,
 				572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */,
 				577970F22F4D082500E879B5 /* SessionHistoryView.swift */,
@@ -201,6 +212,7 @@
 		578312462F4A6F970064D5F6 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				572FD9CA2F4E3DA000DE544B /* NoteComparison.swift */,
 				578312402F4A68560064D5F6 /* PitchResult.swift */,
 				578A36B22F4B90D600A45D9C /* PitchFeedback.swift */,
 				578A36BA2F4B9C4F00A45D9C /* TrainingNotes.swift */,
@@ -412,6 +424,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				572FD9CB2F4E3DB700DE544B /* NoteComparison.swift in Sources */,
 				578A36C12F4BA12C00A45D9C /* BaseNote.swift in Sources */,
 				578A36B32F4B90D600A45D9C /* PitchFeedback.swift in Sources */,
 				5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */,
@@ -420,12 +433,14 @@
 				577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */,
 				578A36BB2F4B9C4F00A45D9C /* TrainingNotes.swift in Sources */,
 				578312412F4A68560064D5F6 /* PitchResult.swift in Sources */,
+				572FD9C72F4E3D0700DE544B /* VoiceComparisonView.swift in Sources */,
 				578A36B92F4B965900A45D9C /* SimulatedMentorEngine.swift in Sources */,
 				577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */,
 				57039DD22F4CF5EE00AFC1E1 /* PitchLabView.swift in Sources */,
 				577970F32F4D083100E879B5 /* SessionHistoryView.swift in Sources */,
 				572FD9BF2F4E2A8C00DE544B /* NoteSegmenter.swift in Sources */,
 				5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */,
+				572FD9CD2F4E3E3100DE544B /* OverlappedPitchCurveView.swift in Sources */,
 				5783122D2F4A32540064D5F6 /* TunerViewModel.swift in Sources */,
 				578A36B52F4B916F00A45D9C /* MentorViewModel.swift in Sources */,
 				572FD9C12F4E2AC000DE544B /* SegmentAnalysisViewModel.swift in Sources */,
@@ -433,6 +448,7 @@
 				578A36BD2F4B9C9B00A45D9C /* SimulationMode.swift in Sources */,
 				578A36BF2F4B9DE300A45D9C /* MentorView.swift in Sources */,
 				579D5C632F49F2C90094A862 /* PitchMVPApp.swift in Sources */,
+				572FD9C92F4E3D6000DE544B /* VoiceComparisonViewModel.swift in Sources */,
 				5783122F2F4A326A0064D5F6 /* TunerView.swift in Sources */,
 				578A36B72F4B93D300A45D9C /* PitchMeterView.swift in Sources */,
 				572FD9C52F4E2B0C00DE544B /* SegmentAnalysisView.swift in Sources */,
