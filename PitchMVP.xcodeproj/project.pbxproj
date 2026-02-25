@@ -200,16 +200,12 @@
 		578312212F4A1B8F0064D5F6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */,
-				572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */,
-				572FD9C62F4E3CF900DE544B /* VoiceComparisonView.swift */,
-				572FD9C42F4E2AFC00DE544B /* SegmentAnalysisView.swift */,
-				572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */,
-				577970F22F4D082500E879B5 /* SessionHistoryView.swift */,
-				57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */,
+				57BC1E712F4F87720033BAF9 /* SegmentAnalysis */,
+				57BC1E702F4F87370033BAF9 /* SessionHistory */,
+				57BC1E6E2F4F86270033BAF9 /* Lab */,
+				57BC1E6C2F4F85DA0033BAF9 /* Mentor */,
+				57BC1E6D2F4F85FD0033BAF9 /* Comparison */,
 				5783122E2F4A326A0064D5F6 /* TunerView.swift */,
-				578A36B62F4B93D300A45D9C /* PitchMeterView.swift */,
-				578A36BE2F4B9DE300A45D9C /* MentorView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -305,6 +301,58 @@
 				579D5C7F2F49F2D00094A862 /* PitchMVPUITestsLaunchTests.swift */,
 			);
 			path = PitchMVPUITests;
+			sourceTree = "<group>";
+		};
+		57BC1E6C2F4F85DA0033BAF9 /* Mentor */ = {
+			isa = PBXGroup;
+			children = (
+				578A36BE2F4B9DE300A45D9C /* MentorView.swift */,
+				578A36B62F4B93D300A45D9C /* PitchMeterView.swift */,
+			);
+			path = Mentor;
+			sourceTree = "<group>";
+		};
+		57BC1E6D2F4F85FD0033BAF9 /* Comparison */ = {
+			isa = PBXGroup;
+			children = (
+				572FD9C62F4E3CF900DE544B /* VoiceComparisonView.swift */,
+				572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */,
+				572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */,
+			);
+			path = Comparison;
+			sourceTree = "<group>";
+		};
+		57BC1E6E2F4F86270033BAF9 /* Lab */ = {
+			isa = PBXGroup;
+			children = (
+				57BC1E6F2F4F86950033BAF9 /* WAVAnalyzer */,
+			);
+			path = Lab;
+			sourceTree = "<group>";
+		};
+		57BC1E6F2F4F86950033BAF9 /* WAVAnalyzer */ = {
+			isa = PBXGroup;
+			children = (
+				57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */,
+			);
+			path = WAVAnalyzer;
+			sourceTree = "<group>";
+		};
+		57BC1E702F4F87370033BAF9 /* SessionHistory */ = {
+			isa = PBXGroup;
+			children = (
+				577970F22F4D082500E879B5 /* SessionHistoryView.swift */,
+			);
+			path = SessionHistory;
+			sourceTree = "<group>";
+		};
+		57BC1E712F4F87720033BAF9 /* SegmentAnalysis */ = {
+			isa = PBXGroup;
+			children = (
+				572FD9C42F4E2AFC00DE544B /* SegmentAnalysisView.swift */,
+				572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */,
+			);
+			path = SegmentAnalysis;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
