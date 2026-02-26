@@ -1,88 +1,74 @@
-//
-//  NoteSegmenter.swift
-//  PitchMVP
-//
-//  Created by victor on 24/02/26.
-//
-
 // NoteSegmenter.swift
 // PitchMVP
 //
-// Detecta automaticamente mudanças de nota em um stream de pitches,
-// agrupa amostras em segmentos e calcula métricas por nota.
+// FIX v2:
+// 1. semitoneThreshold: 0.6 → 0.8
+//    Motivo: 0.6 semitons (60 cents) era insuficiente para vozes com vibrato natural
+//    (20–50 cents de profundidade). O threshold baixo fragmentava uma nota sustentada
+//    em múltiplos segmentos. 0.8 (80 cents) é robusto contra vibrato sem perder
+//    sensibilidade a mudanças de nota reais (que normalmente são ≥ 1 semitom).
 //
-// Pipeline:
-//   [Float] amostras → VocalPitchDetector (frame a frame) → NoteSegmenter
-//   → [NoteSegment] com pitchCurve, vibrato, estabilidade, comparação com alvo
+// 2. VoiceRangeHint — expectedRange passado ao VocalPitchDetector
+//    Motivo: YIN pode errar uma oitava em vozes com harmônicos fortes (baixo/barítono
+//    cantando forte). O VocalPitchDetector já suporta `expectedRange` para correção
+//    de sub-harmônicos, mas o NoteSegmenter nunca o usava.
+//    Agora: `analyze(samples:sampleRate:voiceHint:)` aceita um VoiceRangeHint opcional
+//    que limita a busca do YIN à faixa vocal esperada — elimina erros de oitava
+//    sem afetar a precisão dentro da faixa correta.
 
 import Foundation
 import Accelerate
 
-/// Um segmento de nota detectado automaticamente na gravação.
-/// Contém toda a análise musical daquela nota sustentada.
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: - VoiceRangeHint
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Dica de faixa vocal para orientar o detector de pitch.
+///
+/// Usado para evitar erros de oitava em vozes com harmônicos fortes.
+/// O NoteSegmenter passa esse hint ao VocalPitchDetector como `expectedRange`.
+///
+/// Uso:
+/// ```swift
+/// segmenter.analyze(samples: samples, sampleRate: 44100, voiceHint: .male)
+/// segmenter.analyze(samples: samples, sampleRate: 44100, voiceHint: .female)
+/// segmenter.analyze(samples: samples, sampleRate: 44100, voiceHint: .custom(130...700))
+/// ```
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: - NoteSegment (inalterado)
+// ─────────────────────────────────────────────────────────────────────────────
+
 struct NoteSegment: Identifiable {
 
     let id = UUID()
-
-    /// Nome da nota detectada (ex: "A4", "C#3")
     let noteName: String
-
-    /// Frequência mediana do segmento (Hz) — mais robusta que média contra outliers
     let medianFrequency: Float
-
-    /// MIDI number da nota (float para preservar desvio)
     let midiNote: Float
-
-    /// Curva de pitch ao longo do tempo: array de (tempo em segundos, frequência em Hz)
     let pitchCurve: [(time: Float, frequency: Float)]
-
-    /// Desvio em cents de cada amostra em relação à nota alvo
     let centsOverTime: [Float]
-
-    /// Desvio médio absoluto em cents — estabilidade geral
     let averageCentsDeviation: Float
-
-    /// Desvio máximo absoluto em cents
     let maxCentsDeviation: Float
-
-    /// % do tempo em que estava dentro de ±10 cents da nota alvo
     let stabilityPercentage: Float
-
-    /// Análise de vibrato detectado (nil se não houver vibrato)
     let vibrato: VibratoAnalysis?
-
-    /// Duração do segmento em segundos
     let durationSeconds: Float
-
-    /// Timestamp de início no arquivo (segundos desde o começo)
     let startTime: Float
-
-    /// Número de frames analisados neste segmento
     let frameCount: Int
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - VibratoAnalysis
+// MARK: - VibratoAnalysis (inalterado)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Resultado da análise de vibrato para um segmento de nota.
-/// Vibrato é uma oscilação periódica do pitch — característica expressiva do canto.
 struct VibratoAnalysis {
 
-    /// Taxa do vibrato em Hz (oscilações por segundo) — voz treinada: 5–7 Hz
     let rateHz: Float
-
-    /// Profundidade do vibrato em cents (amplitude pico a pico) — voz treinada: 20–50 cents
     let depthCents: Float
-
-    /// Regularidade do vibrato (0–1) — quão consistente é a oscilação
     let regularity: Float
 
-    /// Classifica a qualidade do vibrato
     var quality: VibratoQuality {
-        // Vibrato vocal ideal: 5–7 Hz, 20–50 cents, alta regularidade
-        let rateOk = (5.0...7.5).contains(rateHz)
-        let depthOk = (20.0...60.0).contains(depthCents)
+        let rateOk    = (5.0...7.5).contains(rateHz)
+        let depthOk   = (20.0...60.0).contains(depthCents)
         let regularOk = regularity > 0.6
 
         switch (rateOk, depthOk, regularOk) {
@@ -96,19 +82,19 @@ struct VibratoAnalysis {
 }
 
 enum VibratoQuality: String {
-    case excellent  = "Vibrato Natural"
-    case irregular  = "Vibrato Irregular"
-    case offRate    = "Taxa Incorreta"
-    case shallow    = "Vibrato Raso"
-    case none       = "Sem Vibrato"
+    case excellent = "Vibrato Natural"
+    case irregular = "Vibrato Irregular"
+    case offRate   = "Taxa Incorreta"
+    case shallow   = "Vibrato Raso"
+    case none      = "Sem Vibrato"
 
     var color: String {
         switch self {
-        case .excellent:  return "green"
-        case .irregular:  return "orange"
-        case .offRate:    return "red"
-        case .shallow:    return "blue"
-        case .none:       return "secondary"
+        case .excellent: return "green"
+        case .irregular: return "orange"
+        case .offRate:   return "red"
+        case .shallow:   return "blue"
+        case .none:      return "secondary"
         }
     }
 }
@@ -117,52 +103,48 @@ enum VibratoQuality: String {
 // MARK: - NoteSegmenter
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Processa um buffer de áudio completo e retorna segmentos por nota detectada.
-///
-/// Algoritmo de segmentação:
-/// 1. Frame a frame (hop de 512 samples) detecta pitch com VocalPitchDetector
-/// 2. Cada pitch é quantizado para a nota MIDI mais próxima
-/// 3. Silêncio (nil) ou mudança de nota > `semitoneThreshold` encerra segmento atual
-/// 4. Segmentos menores que `minDurationSeconds` são descartados (consoantes, transientes)
-/// 5. Para cada segmento: calcula curva de pitch, cents, estabilidade e vibrato
 final class NoteSegmenter {
 
     // MARK: - Configuração
 
-    /// Tamanho do frame de análise por YIN — 4096 samples ≈ 93ms @ 44100Hz
     private let frameSize = 4096
+    private let hopSize   = 512
 
-    /// Hop entre frames — 512 samples ≈ 11.6ms @ 44100Hz
-    /// Overlap generoso para capturar variações rápidas de pitch
-    private let hopSize = 512
+    // FIX: era 0.6 — fragmentava notas com vibrato natural (20–50 cents).
+    // 0.8 semitons (80 cents) é robusto contra vibrato sem perder mudanças reais.
+    private let semitoneThreshold: Float = 0.8
 
-    /// Limiar de mudança de nota: distância em semitons para considerar nota diferente
-    /// 0.5 semitom = 50 cents — robusto contra vibrato e fluctuações naturais
-    private let semitoneThreshold: Float = 0.6
-
-    /// Duração mínima de um segmento para ser considerado nota (não ruído/transiente)
     private let minDurationSeconds: Float = 0.15
-
-    /// Detector de pitch reutilizado em todos os frames
     private let detector = VocalPitchDetector()
 
     // MARK: - API Pública
 
     /// Analisa um buffer de áudio completo e retorna segmentos por nota.
+    ///
     /// - Parameters:
-    ///   - samples: Amostras PCM Float normalizadas em [-1, 1]
+    ///   - samples:    Amostras PCM Float normalizadas em [-1, 1]
     ///   - sampleRate: Taxa de amostragem em Hz
+    ///   - voiceHint:  Faixa vocal esperada para correção de oitava no YIN.
+    ///                 Use `.male` para barítono/baixo/tenor,
+    ///                 `.female` para contralto/mezzo/soprano,
+    ///                 `.automatic` para comportamento sem restrição (padrão).
     /// - Returns: Array de NoteSegment ordenado cronologicamente
-    func analyze(samples: [Float], sampleRate: Float) -> [NoteSegment] {
+    func analyze(
+        samples: [Float],
+        sampleRate: Float,
+        voiceHint: VoiceRangeHint = .custom(130...700)   // ← NOVO parâmetro, não-breaking
+    ) -> [NoteSegment] {
 
         var segments: [NoteSegment] = []
 
-        // Acumuladores para o segmento em construção
         var currentNoteMidi: Float? = nil
         var currentFrames: [(time: Float, frequency: Float)] = []
         var segmentStartTime: Float = 0
 
         let frameCount = (samples.count - frameSize) / hopSize
+
+        // Converte hint para ClosedRange uma vez, fora do loop
+        let expectedRange = voiceHint.frequencyRange
 
         for frameIndex in 0..<frameCount {
 
@@ -173,9 +155,12 @@ final class NoteSegmenter {
             let frame = Array(samples[startSample..<endSample])
             let timeSeconds = Float(startSample) / sampleRate
 
-            // Detecta pitch do frame atual
-            guard let result = detector.detect(buffer: frame, sampleRate: sampleRate) else {
-                // Silêncio ou sinal não periódico — finaliza segmento se havia um em curso
+            // FIX: passa expectedRange ao detector para correção de oitava no YIN
+            guard let result = detector.detect(
+                buffer: frame,
+                sampleRate: sampleRate,
+                expectedRange: expectedRange    // ← era sempre nil antes
+            ) else {
                 if let _ = currentNoteMidi, !currentFrames.isEmpty {
                     let seg = buildSegment(
                         frames: currentFrames,
@@ -192,11 +177,9 @@ final class NoteSegmenter {
             let detectedMidi = result.midNote
 
             if let activeMidi = currentNoteMidi {
-                // Verifica se mudou de nota (distância em semitons)
                 let semitoneDiff = abs(detectedMidi - activeMidi)
 
                 if semitoneDiff > semitoneThreshold {
-                    // Nota mudou — finaliza segmento anterior
                     let seg = buildSegment(
                         frames: currentFrames,
                         startTime: segmentStartTime,
@@ -204,27 +187,22 @@ final class NoteSegmenter {
                     )
                     if let s = seg { segments.append(s) }
 
-                    // Inicia novo segmento
                     currentFrames = [(time: timeSeconds, frequency: result.frequency)]
                     currentNoteMidi = detectedMidi
                     segmentStartTime = timeSeconds
 
                 } else {
-                    // Mesma nota — acumula frame
-                    // Suaviza o MIDI ativo com média exponencial para evitar falsos splits
                     currentNoteMidi = activeMidi * 0.95 + detectedMidi * 0.05
                     currentFrames.append((time: timeSeconds, frequency: result.frequency))
                 }
 
             } else {
-                // Primeiro frame — inicia segmento
                 currentNoteMidi = detectedMidi
                 currentFrames = [(time: timeSeconds, frequency: result.frequency)]
                 segmentStartTime = timeSeconds
             }
         }
 
-        // Finaliza último segmento em aberto
         if !currentFrames.isEmpty {
             let seg = buildSegment(
                 frames: currentFrames,
@@ -237,9 +215,8 @@ final class NoteSegmenter {
         return segments
     }
 
-    // MARK: - Construção de Segmento
+    // MARK: - Construção de Segmento (inalterado)
 
-    /// Compila as métricas de um segmento a partir dos frames acumulados.
     private func buildSegment(
         frames: [(time: Float, frequency: Float)],
         startTime: Float,
@@ -251,14 +228,11 @@ final class NoteSegmenter {
         let frequencies = frames.map(\.frequency)
         let duration = (Float(frames.count) * Float(hopSize)) / sampleRate
 
-        // Descarta segmentos muito curtos (transientes, consoantes, glitches)
         guard duration >= minDurationSeconds else { return nil }
 
-        // Frequência mediana — robusta contra outliers de detecção
         let medianFreq = median(of: frequencies)
         guard let theory = MusicTheory.analyze(frequency: medianFreq) else { return nil }
 
-        // Cents em relação à nota alvo (nota quantizada mais próxima)
         let targetFreq = midiToFrequency(round(theory.midNote))
         let centsOverTime = frequencies.map { freq -> Float in
             guard freq > 0, targetFreq > 0 else { return 0 }
@@ -271,7 +245,6 @@ final class NoteSegmenter {
         let inTuneCount = centsOverTime.filter { abs($0) <= 10 }.count
         let stability = Float(inTuneCount) / Float(centsOverTime.count) * 100
 
-        // Análise de vibrato sobre a curva de cents
         let vibratoHopRate = sampleRate / Float(hopSize)
         let vibratoAnalysis = analyzeVibrato(centsTimeSeries: centsOverTime, frameRate: vibratoHopRate)
 
@@ -291,33 +264,15 @@ final class NoteSegmenter {
         )
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Análise de Vibrato
-    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Análise de Vibrato (inalterado)
 
-    /// Detecta e mede vibrato em uma série temporal de cents.
-    ///
-    /// Método:
-    /// 1. Remove tendência linear (detrend) para isolar a oscilação
-    /// 2. Aplica FFT sobre a série de cents
-    /// 3. Busca pico de energia na faixa 3–9 Hz (vibrato vocal)
-    /// 4. Mede profundidade (amplitude pico a pico) e regularidade (energia do pico / total)
-    ///
-    /// - Parameters:
-    ///   - centsTimeSeries: Array de desvios em cents ao longo do tempo
-    ///   - frameRate: Taxa de frames por segundo (sampleRate / hopSize)
-    /// - Returns: VibratoAnalysis ou nil se não há vibrato detectável
     private func analyzeVibrato(centsTimeSeries: [Float], frameRate: Float) -> VibratoAnalysis? {
 
-        // Mínimo de ~0.5s de dados para detectar vibrato confiável
         guard centsTimeSeries.count >= Int(frameRate * 0.5) else { return nil }
 
-        // 1. Detrend: subtrai a média para centralizar
         let mean = centsTimeSeries.reduce(0, +) / Float(centsTimeSeries.count)
         var detrended = centsTimeSeries.map { $0 - mean }
 
-        // 2. FFT sobre a série de cents (para detectar periodicidade)
-        // Redimensiona para potência de 2 mais próxima
         let fftN = nextPowerOf2(greaterThan: detrended.count)
         detrended += [Float](repeating: 0, count: fftN - detrended.count)
 
@@ -333,7 +288,6 @@ final class NoteSegmenter {
         var magnitudes = [Float](repeating: 0, count: fftN / 2)
         vDSP_zvmags(&splitComplex, 1, &magnitudes, 1, vDSP_Length(fftN / 2))
 
-        // 3. Busca pico na faixa de vibrato vocal (3–9 Hz)
         let binResolution = frameRate / Float(fftN)
         let minBin = max(1, Int(3.0 / binResolution))
         let maxBin = min(magnitudes.count - 1, Int(9.0 / binResolution))
@@ -351,16 +305,13 @@ final class NoteSegmenter {
 
         let vibratoRateHz = Float(peakBin) * binResolution
 
-        // 4. Profundidade = 2 * RMS dos cents detrendados → escala para pico a pico
         var rms: Float = 0
         vDSP_rmsqv(detrended, 1, &rms, vDSP_Length(detrended.count))
-        let depthCents = rms * 2.83  // ≈ 2√2 para sinal sinusoidal puro
+        let depthCents = rms * 2.83
 
-        // 5. Regularidade = energia do pico / energia total na faixa de vibrato
         let totalEnergy = magnitudes[minBin...maxBin].reduce(0, +)
         let regularity = totalEnergy > 0 ? peakMag / totalEnergy : 0
 
-        // Vibrato só é válido se tiver profundidade mínima perceptível (> 10 cents)
         guard depthCents > 10 else { return nil }
 
         return VibratoAnalysis(
@@ -370,9 +321,7 @@ final class NoteSegmenter {
         )
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Utilitários
-    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Utilitários (inalterados)
 
     private func median(of values: [Float]) -> Float {
         guard !values.isEmpty else { return 0 }

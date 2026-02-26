@@ -6,6 +6,11 @@
 // 2. Normalização para 44100 Hz — garante que YIN e FFT operem com sample rate
 //    consistente independentemente do formato original do arquivo
 // 3. Tratamento de erros mais granular para facilitar debugging
+//
+// FIX v2:
+// 4. Removido dead code no downmix estéreo: `AVAudioChannelLayout` era criado
+//    mas nunca aplicado ao converter. `converter.downmix = true` é suficiente
+//    e já faz a média L+R → mono corretamente via AVAudioConverter.
 
 import AVFoundation
 
@@ -24,7 +29,7 @@ final class OfflineAudioFileService {
     ///
     /// Suporta:
     /// - Mono WAV/MP3/M4A (caminho direto, sem conversão)
-    /// - Estéreo WAV/MP3/M4A (downmix L+R → mono com média)
+    /// - Estéreo WAV/MP3/M4A (downmix L+R → mono com média via AVAudioConverter)
     /// - Sample rates diferentes (48000, 22050, etc.) → resample para 44100
     ///
     /// - Parameter url: URL local do arquivo
@@ -116,11 +121,10 @@ final class OfflineAudioFileService {
             )
         }
 
-        // Configura downmix estéreo → mono (média dos canais)
-        // Sem isso, AVAudioConverter usa apenas o canal esquerdo por padrão
-        if sourceFormat.channelCount == 2 {
-            // Matrix de downmix: [L, R] → mono = 0.5*L + 0.5*R
-            let matrix = AVAudioChannelLayout(layoutTag: kAudioChannelLayoutTag_Mono)!
+        // FIX: apenas `downmix = true` é necessário para L+R → mono (média dos canais).
+        // A criação de AVAudioChannelLayout que existia antes era dead code —
+        // a variável era criada mas nunca atribuída ao converter.
+        if sourceFormat.channelCount > 1 {
             converter.downmix = true
         }
 
@@ -145,7 +149,6 @@ final class OfflineAudioFileService {
                 return nil
             }
 
-            // Lê próximo chunk do arquivo original
             guard let inputBuffer = AVAudioPCMBuffer(
                 pcmFormat: sourceFormat,
                 frameCapacity: inputChunkSize
@@ -157,7 +160,6 @@ final class OfflineAudioFileService {
             do {
                 try file.read(into: inputBuffer, frameCount: inputChunkSize)
             } catch {
-                // Fim do arquivo ou erro de leitura
                 inputExhausted = true
                 if inputBuffer.frameLength == 0 {
                     outStatus.pointee = .endOfStream
