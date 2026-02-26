@@ -1,19 +1,12 @@
-//
-//  SupabaseAudioRepository.swift
-//  PitchMVP
-//
-//  Created by victor on 24/02/26.
-//
-
 // SupabaseAudioRepository.swift
 // PitchMVP
 //
-// Repositório de alto nível que abstrai os dois buckets do Supabase:
-//   • performances/$USER/$FILE  → gravações do usuário
-//   • references/$USER/$FILE    → vozes de referência
+// CACHE PERSISTENTE:
+//   Ao carregar a lista de arquivos, reconnecta automaticamente localURL
+//   de qualquer arquivo já em cache no disco — sem request de rede adicional.
 //
-// Cada ViewModel usa este repositório — nunca acessa SupabaseStorageClient diretamente.
-// Isso facilita mock em testes e troca de backend no futuro.
+//   Ao baixar, passa o updated_at do Supabase para o client comparar com
+//   o manifesto e decidir se re-baixa ou usa o cache.
 
 import Foundation
 import Combine
@@ -22,7 +15,6 @@ import Combine
 // MARK: - RemoteAudioFile
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Representa um arquivo de áudio remoto do Supabase com estado de download.
 struct RemoteAudioFile: Identifiable, Hashable {
 
     let id: String
@@ -31,12 +23,14 @@ struct RemoteAudioFile: Identifiable, Hashable {
     let userFolder: String
     let formattedSize: String
 
-    /// nil = não baixado, .some = caminho local cacheado
+    /// Timestamp de última modificação no Supabase — usado para invalidar cache.
+    let updatedAt: String?
+
+    /// nil = não baixado ainda, .some = caminho local no cache persistente
     var localURL: URL? = nil
 
     var isDownloaded: Bool { localURL != nil }
 
-    /// Label de exibição sem extensão
     var displayName: String {
         URL(fileURLWithPath: name).deletingPathExtension().lastPathComponent
     }
@@ -47,6 +41,7 @@ struct RemoteAudioFile: Identifiable, Hashable {
         self.bucket      = bucket
         self.userFolder  = userFolder
         self.formattedSize = file.formattedSize
+        self.updatedAt   = file.cacheValidator   // updated_at ou eTag como fallback
     }
 
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
@@ -73,29 +68,23 @@ enum AudioBucket: String {
 // MARK: - SupabaseAudioRepository
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Repositório singleton para acesso aos áudios do Supabase.
-/// Gerencia listagem, download e cache de ambos os buckets.
 final class SupabaseAudioRepository: ObservableObject {
 
     // MARK: - Singleton
+
     static let shared = SupabaseAudioRepository()
 
     // MARK: - Estado Publicado
 
     @Published private(set) var performanceFiles: [RemoteAudioFile] = []
     @Published private(set) var referenceFiles:   [RemoteAudioFile] = []
-    @Published private(set) var isLoading = false
+    @Published private(set) var isLoading   = false
     @Published private(set) var loadError: String? = nil
 
     // MARK: - Configuração
 
-    /// ID do usuário atual — substitua pelo valor real do seu Auth system.
-    /// Ex: se usar Supabase Auth: SupabaseAuth.shared.currentUser?.id
     var currentUserID: String = "user_001"
-
-    /// Se true, usa signed URLs (bucket privado com RLS).
-    /// Se false, usa URL pública direta (bucket público).
-    var useSignedURLs: Bool = false
+    var useSignedURLs: Bool   = false
 
     // MARK: - Dependências
 
@@ -109,7 +98,10 @@ final class SupabaseAudioRepository: ObservableObject {
     // MARK: - Listar Arquivos
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// Carrega a lista de arquivos de ambos os buckets simultaneamente.
+    /// Carrega a lista de arquivos de ambos os buckets em paralelo.
+    ///
+    /// Após listar, cada arquivo tem seu localURL restaurado automaticamente
+    /// se já existir em cache — sem download adicional.
     @MainActor
     func loadAllFiles() async {
         isLoading = true
@@ -120,12 +112,15 @@ final class SupabaseAudioRepository: ObservableObject {
 
         let (perf, refs) = await (performances, references)
 
-        performanceFiles = perf
-        referenceFiles   = refs
+        // Reconnecta localURL de arquivos já em cache persistente
+        performanceFiles = perf.map { reconnectCache($0) }
+        referenceFiles   = refs.map { reconnectCache($0) }
         isLoading        = false
+
+        let cachedCount = (performanceFiles + referenceFiles).filter(\.isDownloaded).count
+        print("[Repository] Lista carregada — \(cachedCount) arquivo(s) já em cache")
     }
 
-    /// Carrega arquivos de um bucket específico.
     @MainActor
     func loadFiles(bucket: AudioBucket) async {
         isLoading = true
@@ -134,39 +129,65 @@ final class SupabaseAudioRepository: ObservableObject {
         let files = await fetchFiles(bucket: bucket)
 
         switch bucket {
-        case .performances: performanceFiles = files
-        case .references:   referenceFiles   = files
+        case .performances:
+            performanceFiles = files.map { reconnectCache($0) }
+        case .references:
+            referenceFiles   = files.map { reconnectCache($0) }
         }
 
         isLoading = false
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Download
+    // MARK: - Download com Invalidação por updated_at
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// Baixa um arquivo remoto e atualiza seu `localURL` na lista.
-    /// Retorna a URL local do arquivo (cacheado ou recém-baixado).
+    /// Baixa um arquivo remoto, usando cache persistente.
+    ///
+    /// Passa o `updatedAt` do arquivo para o client comparar com o manifesto.
+    /// Se o arquivo não mudou no Supabase desde o último download, retorna o
+    /// cache local imediatamente sem nenhuma request de rede.
     @MainActor
     @discardableResult
     func download(_ file: RemoteAudioFile) async throws -> URL {
 
-        // Se já está em cache, retorna imediatamente
-        if let local = file.localURL {
-            return local
-        }
-
+        // Se já está em cache E o validator local bate com o remoto,
+        // o client retorna imediatamente sem download.
         let localURL = try await client.downloadAudio(
-            bucket:     file.bucket.rawValue,
-            userFolder: file.userFolder,
-            fileName:   file.name,
-            isPrivate:  useSignedURLs
+            bucket:           file.bucket.rawValue,
+            userFolder:       file.userFolder,
+            fileName:         file.name,
+            isPrivate:        useSignedURLs,
+            remoteValidator:  file.updatedAt
         )
 
-        // Atualiza o localURL na lista correspondente
         updateLocalURL(for: file, url: localURL)
-
         return localURL
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Cache Utilities
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Tamanho total do cache formatado (ex: "23.4 MB").
+    var formattedCacheSize: String {
+        client.formattedCacheSize()
+    }
+
+    /// Remove todo o cache local e reinicia o estado de download.
+    @MainActor
+    func clearCache() throws {
+        try client.clearCache()
+
+        // Reseta localURL de todos os arquivos listados
+        performanceFiles = performanceFiles.map {
+            var f = $0; f.localURL = nil; return f
+        }
+        referenceFiles = referenceFiles.map {
+            var f = $0; f.localURL = nil; return f
+        }
+
+        print("[Repository] Cache limpo")
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -179,13 +200,35 @@ final class SupabaseAudioRepository: ObservableObject {
                 bucket:     bucket.rawValue,
                 userFolder: currentUserID
             )
-            return raw.map { RemoteAudioFile(from: $0, bucket: bucket, userFolder: currentUserID) }
-        } catch {
-            await MainActor.run {
-                self.loadError = error.localizedDescription
+            return raw.map {
+                RemoteAudioFile(from: $0, bucket: bucket, userFolder: currentUserID)
             }
+        } catch {
+            await MainActor.run { self.loadError = error.localizedDescription }
             return []
         }
+    }
+
+    /// Tenta reconectar o localURL de um arquivo usando o cache persistente em disco.
+    /// Não faz nenhuma request de rede — apenas verifica se o arquivo existe localmente.
+    ///
+    /// Chamado após cada listagem para que arquivos já baixados apareçam como
+    /// `isDownloaded = true` imediatamente, sem o usuário precisar re-baixar.
+    private func reconnectCache(_ file: RemoteAudioFile) -> RemoteAudioFile {
+        guard file.localURL == nil else { return file }   // já conectado
+
+        if let cached = client.cachedURL(
+            bucket:     file.bucket.rawValue,
+            userFolder: file.userFolder,
+            fileName:   file.name
+        ) {
+            var updated = file
+            updated.localURL = cached
+            print("[Repository] Cache reconnected: \(file.name)")
+            return updated
+        }
+
+        return file
     }
 
     @MainActor
