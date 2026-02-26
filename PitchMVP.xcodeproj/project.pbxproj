@@ -24,6 +24,8 @@
 		577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */; };
 		577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F02F4D07F900E879B5 /* SessionHistoryService.swift */; };
 		577970F32F4D083100E879B5 /* SessionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F22F4D082500E879B5 /* SessionHistoryView.swift */; };
+		5780B23A2F50DC2300E935C5 /* CrossGenderBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5780B2392F50DC0B00E935C5 /* CrossGenderBanner.swift */; };
+		5780B23C2F50DCDD00E935C5 /* MelodicAligner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5780B23B2F50DCBE00E935C5 /* MelodicAligner.swift */; };
 		578312172F4A0D660064D5F6 /* tone440.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578312162F4A0D660064D5F6 /* tone440.wav */; };
 		5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */; };
 		5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5783122A2F4A321E0064D5F6 /* OfflineAudioFileService.swift */; };
@@ -92,6 +94,8 @@
 		577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VocalPitchDetector+YIN.swift"; sourceTree = "<group>"; };
 		577970F02F4D07F900E879B5 /* SessionHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryService.swift; sourceTree = "<group>"; };
 		577970F22F4D082500E879B5 /* SessionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryView.swift; sourceTree = "<group>"; };
+		5780B2392F50DC0B00E935C5 /* CrossGenderBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossGenderBanner.swift; sourceTree = "<group>"; };
+		5780B23B2F50DCBE00E935C5 /* MelodicAligner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MelodicAligner.swift; sourceTree = "<group>"; };
 		578312162F4A0D660064D5F6 /* tone440.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = tone440.wav; sourceTree = "<group>"; };
 		5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngineService.swift; sourceTree = "<group>"; };
 		5783122A2F4A321E0064D5F6 /* OfflineAudioFileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineAudioFileService.swift; sourceTree = "<group>"; };
@@ -163,13 +167,21 @@
 			path = API;
 			sourceTree = "<group>";
 		};
+		5780B2362F50D9F300E935C5 /* Engines */ = {
+			isa = PBXGroup;
+			children = (
+				5780B23B2F50DCBE00E935C5 /* MelodicAligner.swift */,
+				578A36B82F4B965900A45D9C /* SimulatedMentorEngine.swift */,
+			);
+			path = Engines;
+			sourceTree = "<group>";
+		};
 		578312182F4A1ABB0064D5F6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */,
 				5783122A2F4A321E0064D5F6 /* OfflineAudioFileService.swift */,
 				577970F02F4D07F900E879B5 /* SessionHistoryService.swift */,
-				578A36B82F4B965900A45D9C /* SimulatedMentorEngine.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -265,6 +277,7 @@
 				572FD9CE2F4E44B100DE544B /* API */,
 				578A36AE2F4B4DBA00A45D9C /* vozm1.wav */,
 				578312492F4A80570064D5F6 /* voz5.wav */,
+				5780B2362F50D9F300E935C5 /* Engines */,
 				578312192F4A1AC80064D5F6 /* DSP */,
 				578312182F4A1ABB0064D5F6 /* Services */,
 				5783121A2F4A1AD00064D5F6 /* ViewModels */,
@@ -315,6 +328,7 @@
 		57BC1E6D2F4F85FD0033BAF9 /* Comparison */ = {
 			isa = PBXGroup;
 			children = (
+				5780B2392F50DC0B00E935C5 /* CrossGenderBanner.swift */,
 				572FD9C62F4E3CF900DE544B /* VoiceComparisonView.swift */,
 				572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */,
 				572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */,
@@ -495,6 +509,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				572FD9CB2F4E3DB700DE544B /* NoteComparison.swift in Sources */,
+				5780B23A2F50DC2300E935C5 /* CrossGenderBanner.swift in Sources */,
 				578A36C12F4BA12C00A45D9C /* BaseNote.swift in Sources */,
 				578A36B32F4B90D600A45D9C /* PitchFeedback.swift in Sources */,
 				5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */,
@@ -515,6 +530,7 @@
 				578A36B52F4B916F00A45D9C /* MentorViewModel.swift in Sources */,
 				572FD9D72F4E45FE00DE544B /* RemoteFilePickerView.swift in Sources */,
 				572FD9D22F4E452200DE544B /* SupabaseStorageClient.swift in Sources */,
+				5780B23C2F50DCDD00E935C5 /* MelodicAligner.swift in Sources */,
 				572FD9C12F4E2AC000DE544B /* SegmentAnalysisViewModel.swift in Sources */,
 				578A36B12F4B524300A45D9C /* TunerLabViewModel.swift in Sources */,
 				578A36BD2F4B9C9B00A45D9C /* SimulationMode.swift in Sources */,

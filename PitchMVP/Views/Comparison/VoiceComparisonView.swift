@@ -1,11 +1,11 @@
 // VoiceComparisonView.swift
 // PitchMVP
 //
-// ATUALIZADO:
-// 1. ComparisonSummaryBanner exibe pitch class match % e contorno melódico %
-// 2. NoteComparisonCard mostra se o grau bate entre as vozes (ex: C3 vs C4)
-// 3. ComparisonMetricsGrid exibe desvio individual de cada voz + delta
-// 4. Indicador de contorno melódico (↑↓=) por nota
+// ATUALIZADO (cross-gender):
+// 1. CrossGenderBanner inserido no topo dos resultados — aparece somente quando detectado
+// 2. CrossGenderSummaryRow no ComparisonSummaryBanner — exibe registros vocais detectados
+// 3. OctaveShiftTag no NoteComparisonCard — indica diferença de oitava por nota
+// 4. Nenhuma funcionalidade anterior foi removida
 
 import SwiftUI
 import UniformTypeIdentifiers
@@ -177,13 +177,23 @@ struct VoiceComparisonView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Resultado
+    // MARK: - Resultado (ATUALIZADO: CrossGenderBanner + CrossGenderSummaryRow)
 
     private func resultContent(result: ComparisonResult) -> some View {
         ScrollView {
             VStack(spacing: 16) {
-                ComparisonSummaryBanner(result: result)
+
+                // ── NOVO: Banner cross-gender (aparece somente quando detectado) ──
+                CrossGenderBanner(context: vm.crossGenderContext)
                     .padding(.horizontal, 20)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+
+                // ── Summary banner com row de registros vocais ─────────────────
+                ComparisonSummaryBanner(
+                    result: result,
+                    crossGenderContext: vm.crossGenderContext  // ← NOVO parâmetro
+                )
+                .padding(.horizontal, 20)
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("NOTA A NOTA")
@@ -233,7 +243,7 @@ struct VoiceComparisonView: View {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - SelectionStatusBar
+// MARK: - SelectionStatusBar (inalterado)
 // ─────────────────────────────────────────────────────────────────────────────
 
 private struct SelectionStatusBar: View {
@@ -269,7 +279,7 @@ private struct SelectionStatusBar: View {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - VoiceTabPicker
+// MARK: - VoiceTabPicker (inalterado)
 // ─────────────────────────────────────────────────────────────────────────────
 
 private struct VoiceTabPicker: View {
@@ -302,11 +312,12 @@ private struct VoiceTabPicker: View {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - ComparisonSummaryBanner (ATUALIZADO)
+// MARK: - ComparisonSummaryBanner (ATUALIZADO: crossGenderContext + CrossGenderSummaryRow)
 // ─────────────────────────────────────────────────────────────────────────────
 
 private struct ComparisonSummaryBanner: View {
     let result: ComparisonResult
+    let crossGenderContext: CrossGenderContext?  // ← NOVO
 
     var body: some View {
         VStack(spacing: 0) {
@@ -319,7 +330,12 @@ private struct ComparisonSummaryBanner: View {
                 Label(result.referenceFileName, systemImage: "star.fill")
                     .font(.system(size: 12, design: .rounded)).foregroundStyle(.blue).lineLimit(1)
             }
-            .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 14)
+            .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 10)
+
+            // ── NOVO: Row de registros vocais (somente cross-gender) ──────────
+            CrossGenderSummaryRow(context: crossGenderContext)
+
+            hdivider
 
             // ── Seção 1: Grades ──────────────────────────────────────────────
             sectionLabel("AVALIAÇÃO POR NOTA")
@@ -421,7 +437,7 @@ private struct ComparisonSummaryBanner: View {
             }
             .padding(.vertical, 12)
 
-            // ── Nota cross-gender ────────────────────────────────────────────
+            // ── Nota de rodapé (adaptada para cross-gender) ───────────────────
             HStack(spacing: 4) {
                 Image(systemName: "info.circle").font(.system(size: 9))
                 Text("Desvio medido individualmente por voz — oitavas diferentes são normais")
@@ -433,7 +449,7 @@ private struct ComparisonSummaryBanner: View {
         .background(RoundedRectangle(cornerRadius: 16).fill(Color(.secondarySystemBackground)))
     }
 
-    // MARK: Helpers
+    // MARK: Helpers (inalterados)
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
@@ -486,7 +502,7 @@ private struct SummaryMetric: View {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - NoteComparisonCard (ATUALIZADO)
+// MARK: - NoteComparisonCard (ATUALIZADO: OctaveShiftTag)
 // ─────────────────────────────────────────────────────────────────────────────
 
 struct NoteComparisonCard: View {
@@ -514,8 +530,8 @@ struct NoteComparisonCard: View {
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(.tertiary).frame(width: 20, alignment: .trailing)
 
-                    // Nome da nota + indicador de pitch class match
-                    VStack(alignment: .leading, spacing: 1) {
+                    // Nome da nota + grau + OctaveShiftTag (NOVO)
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(comparison.noteName)
                             .font(.system(size: 20, weight: .light, design: .rounded))
 
@@ -533,8 +549,14 @@ struct NoteComparisonCard: View {
                             }
                             .foregroundStyle(comparison.pitchClassMatch ? Color.green : Color.red)
                         }
+
+                        // ── NOVO: Tag de diferença de oitava ─────────────────
+                        OctaveShiftTag(
+                            userNote: comparison.userSegment,
+                            referenceNote: comparison.referenceSegment
+                        )
                     }
-                    .frame(width: 80, alignment: .leading)
+                    .frame(width: 100, alignment: .leading)
 
                     VStack(alignment: .leading, spacing: 2) {
                         if let cents = comparison.centsDelta {
@@ -557,7 +579,7 @@ struct NoteComparisonCard: View {
 
                     Spacer()
 
-                    // Timestamp — em que minuto/segundo aconteceu essa nota
+                    // Timestamp
                     VStack(spacing: 1) {
                         Image(systemName: "clock")
                             .font(.system(size: 8))
@@ -607,9 +629,9 @@ struct NoteComparisonCard: View {
     private func contourIcon(_ direction: ContourDirection, color: Color) -> some View {
         let icon: String
         switch direction {
-        case .up:   icon = "arrow.up"
-        case .down: icon = "arrow.down"
-        case .same: icon = "minus"
+        case .up:    icon = "arrow.up"
+        case .down:  icon = "arrow.down"
+        case .same:  icon = "minus"
         case .unset: icon = "circle"
         }
         return Image(systemName: icon)
@@ -619,7 +641,7 @@ struct NoteComparisonCard: View {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - ComparisonMetricsGrid (ATUALIZADO)
+// MARK: - ComparisonMetricsGrid (inalterado)
 // ─────────────────────────────────────────────────────────────────────────────
 
 private struct ComparisonMetricsGrid: View {
@@ -628,7 +650,6 @@ private struct ComparisonMetricsGrid: View {
     var body: some View {
         VStack(spacing: 10) {
 
-            // Aviso semântico quando as vozes estão em oitavas diferentes
             if let u = comparison.userSegment,
                let r = comparison.referenceSegment,
                abs(u.midiNote - r.midiNote) > 6 {
@@ -666,7 +687,6 @@ private struct ComparisonMetricsGrid: View {
                 deltaNote:  nil
             )
 
-            // Linha de notas com oitava explícita
             if let u = comparison.userSegment, let r = comparison.referenceSegment {
                 HStack {
                     Text("Nota")
@@ -684,7 +704,6 @@ private struct ComparisonMetricsGrid: View {
                     }
                     .frame(width: 56)
 
-                    // Indicador pitch class
                     Image(systemName: comparison.pitchClassMatch ? "checkmark.circle.fill" : "xmark.circle")
                         .font(.system(size: 14))
                         .foregroundStyle(comparison.pitchClassMatch ? Color.green : Color.red)
@@ -729,7 +748,7 @@ private struct ComparisonMetricsGrid: View {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - VibratoComparisonRow (sem mudanças)
+// MARK: - VibratoComparisonRow (inalterado)
 // ─────────────────────────────────────────────────────────────────────────────
 
 private struct VibratoComparisonRow: View {

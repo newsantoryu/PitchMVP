@@ -1,10 +1,19 @@
 // VoiceComparisonViewModel+Supabase.swift
 // PitchMVP
 //
-// ALINHAMENTO: cronológico com tolerância de oitava.
-// A 1ª nota do usuário pareia com a 1ª da referência, a 2ª com a 2ª, etc.
-// Se estiverem no mesmo grau (ex: C3 vs C4), não penaliza — é considerado correto.
-// Sem reordenamento: a ordem da música é respeitada.
+// ATUALIZADO — Cross-Gender Alignment:
+//   • buildComparisons agora usa MelodicAligner (alinhamento por janela temporal + pitch class)
+//     em vez do pareamento posicional ingênuo (nota[i] com nota[i]).
+//   • crossGenderContext publicado para consumo na UI (badge de registro vocal).
+//   • Nenhuma funcionalidade anterior foi removida.
+//
+// ALINHAMENTO MELÓDICO (novo):
+//   Barítono C3 × Soprano C4 → pareados corretamente por pitch class ("C"),
+//   mesmo que o número total de segmentos detectados seja diferente entre as vozes.
+//
+// ALINHAMENTO ANTERIOR (mantido para referência no comentário):
+//   Era: nota[0] com nota[0], nota[1] com nota[1], etc.
+//   Problema: segmentadores produzem contagens diferentes em cross-gender.
 
 import Foundation
 import SwiftUI
@@ -22,6 +31,11 @@ final class VoiceComparisonViewModel: ObservableObject {
     @Published var result: ComparisonResult? = nil
     @Published var activeTab: Int = 0
 
+    // MARK: - Cross-Gender Context (NOVO)
+
+    /// Publicado após comparação para exibir badge de registro na UI.
+    @Published var crossGenderContext: CrossGenderContext? = nil
+
     // MARK: - Repositório Supabase
 
     @Published var performanceFiles: [RemoteAudioFile] = []
@@ -36,6 +50,14 @@ final class VoiceComparisonViewModel: ObservableObject {
     private let repository   = SupabaseAudioRepository.shared
     private let audioService = OfflineAudioFileService()
     private let segmenter    = NoteSegmenter()
+
+    /// Aligner com janela temporal de ±1.5s — ajuste conforme o repertório.
+    /// Para música mais lenta/livre, aumente para 2.0–3.0s.
+    private let aligner = MelodicAligner(
+        timeWindowSeconds: 1.5,
+        minimumMatchScore: 0.25,
+        pitchClassMismatchPenalty: 0.4
+    )
 
     // MARK: - Computed
 
@@ -92,6 +114,7 @@ final class VoiceComparisonViewModel: ObservableObject {
 
         state  = .analyzing(step: "Preparando arquivos...")
         result = nil
+        crossGenderContext = nil
 
         Task { @MainActor in
             do {
@@ -108,6 +131,23 @@ final class VoiceComparisonViewModel: ObservableObject {
                 state = .analyzing(step: "Analisando sua voz...")
                 let (userSamples, userRate) = try audioService.loadSamples(from: userURL)
                 let userSegments = segmenter.analyze(samples: userSamples, sampleRate: userRate)
+
+                // ── Cross-gender detection (NOVO) ─────────────────────────────
+                let cgContext = CrossGenderContext.analyze(
+                    userSegments: userSegments,
+                    referenceSegments: refSegments
+                )
+                crossGenderContext = cgContext
+
+                // Log diagnóstico — visível no console durante desenvolvimento
+                if cgContext.isCrossGender {
+                    print("""
+                    [MelodicAligner] ⚡ Cross-gender detectado
+                      Usuário:    \(cgContext.estimatedUserVoiceType.rawValue) (shift médio: \(String(format: "%.1f", cgContext.medianOctaveShift)) semitons)
+                      Referência: \(cgContext.estimatedReferenceVoiceType.rawValue)
+                      → Usando alinhamento por pitch class + janela temporal
+                    """)
+                }
 
                 state = .analyzing(step: "Comparando notas...")
                 let comparisons = buildComparisons(user: userSegments, reference: refSegments)
@@ -132,6 +172,7 @@ final class VoiceComparisonViewModel: ObservableObject {
     func reset() {
         result = nil
         state  = .idle
+        crossGenderContext = nil
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -154,54 +195,47 @@ final class VoiceComparisonViewModel: ObservableObject {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Alinhamento Cronológico com Tolerância de Oitava
+    // MARK: - Alinhamento Melódico (ATUALIZADO)
     // ─────────────────────────────────────────────────────────────────────────
     //
-    // Regras:
-    //  • A N-ésima nota do usuário pareia com a N-ésima da referência.
-    //    A ordem da melodia é sempre preservada — sem reordenamento.
+    // Substituição do pareamento posicional por alinhamento inteligente.
     //
-    //  • Se a referência tiver mais notas, as extras ficam com userSegment = nil
-    //    (usuário não cantou essa nota).
+    // ANTES (ingênuo — problemático em cross-gender):
+    //   note[0] ↔ note[0], note[1] ↔ note[1], ...
+    //   → Falha quando as vozes produzem contagens diferentes de segmentos.
     //
-    //  • Se o usuário tiver mais notas, as extras ficam com referenceSegment = nil
-    //    (cantou notas a mais).
+    // AGORA (MelodicAligner):
+    //   Para cada nota da referência, busca o melhor par no usuário
+    //   dentro de ±1.5s por pitch class (ignora oitava).
+    //   → Barítono C3 pareia com Soprano C4 corretamente.
+    //   → Notas sem par ficam como "ausentes" (educacional para o professor).
     //
-    //  • Tolerância de oitava: C3 vs C4 é reconhecido como "grau correto"
-    //    (pitchClassMatch = true) mas NÃO afeta o cálculo de centsDelta —
-    //    cada voz é sempre avaliada em relação à sua própria nota alvo.
+    // Regras preservadas (inalteradas):
+    //   • pitchClassMatch = true quando graus batem, independente de oitava
+    //   • centsDelta = desvio de cada voz NA SUA nota, não distância entre elas
+    //   • Notas extras do usuário ficam com referenceSegment = nil
+    //   • Notas extras da referência ficam com userSegment = nil
     //
     private func buildComparisons(
         user: [NoteSegment],
         reference: [NoteSegment]
     ) -> [NoteComparison] {
 
-        let maxCount = max(user.count, reference.count)
+        // Delega ao MelodicAligner — retorna pares na ordem cronológica da referência
+        var comparisons = aligner.align(user: user, reference: reference)
 
-        var comparisons = (0..<maxCount).map { i in
-            NoteComparison(
-                index: i,
-                userSegment:      i < user.count      ? user[i]      : nil,
-                referenceSegment: i < reference.count ? reference[i] : nil
-            )
-        }
-
-        // Injeta direções de contorno melódico após montar todos os pares
+        // Injeta direções de contorno melódico (lógica original preservada)
         comparisons = injectMelodicContour(into: comparisons)
 
         return comparisons
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Contorno Melódico
+    // MARK: - Contorno Melódico (inalterado)
     // ─────────────────────────────────────────────────────────────────────────
 
     /// Calcula a direção melódica de cada nota (subiu/desceu/igual) em relação
     /// à nota anterior e injeta nas comparações.
-    ///
-    /// Usa MIDI arredondado para comparar direção — variações de cents dentro
-    /// da mesma nota não contam como mudança de direção.
-    /// Oitavas SÃO consideradas: C3→D3 e C4→D4 são ambas "subiu".
     private func injectMelodicContour(into comparisons: [NoteComparison]) -> [NoteComparison] {
 
         var result = comparisons
@@ -243,7 +277,7 @@ final class VoiceComparisonViewModel: ObservableObject {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - AudioSource
+// MARK: - AudioSource (inalterado)
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum AudioSource: Equatable {
@@ -270,7 +304,7 @@ enum AudioSource: Equatable {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - ComparisonState
+// MARK: - ComparisonState (inalterado)
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum ComparisonState: Equatable {
