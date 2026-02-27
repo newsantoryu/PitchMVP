@@ -121,14 +121,16 @@ final class VoiceComparisonViewModel: ObservableObject {
                 let (refSamples, refRate) = try audioService.loadSamples(from: refURL)
                 let refSegments = segmenter.analyze(
                     samples: refSamples,
-                    sampleRate: refRate
+                    sampleRate: refRate,
+                    voiceHint: rHint
                 )
 
                 state = .analyzing(step: "Analisando sua voz...")
                 let (userSamples, userRate) = try audioService.loadSamples(from: userURL)
                 let userSegments = segmenter.analyze(
                     samples: userSamples,
-                    sampleRate: userRate
+                    sampleRate: userRate,
+                    voiceHint: uHint
                 )
 
                 // 100% determinístico — sem inferência por áudio
