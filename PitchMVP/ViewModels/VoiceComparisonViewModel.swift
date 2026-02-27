@@ -65,6 +65,10 @@ final class VoiceComparisonViewModel: ObservableObject {
 
     private var securityScopedURLs: Set<URL> = []
 
+    // MARK: - Task de análise (cancelável)
+
+    private var analysisTask: Task<Void, Never>?
+
     // MARK: - Dependências
 
     private let repository   = SupabaseAudioRepository.shared
@@ -162,13 +166,16 @@ final class VoiceComparisonViewModel: ObservableObject {
         result = nil
         crossGenderContext = nil
 
-        Task { @MainActor in
+        analysisTask = Task { @MainActor in
             do {
+                try Task.checkCancellation()
                 state = .analyzing(step: "Baixando referência...")
                 let refURL = try await resolveURL(for: refSrc)
+                try Task.checkCancellation()
 
                 state = .analyzing(step: "Baixando sua voz...")
                 let userURL = try await resolveURL(for: userSrc)
+                try Task.checkCancellation()
 
                 state = .analyzing(step: "Analisando referência...")
                 let (refSamples, refRate) = try audioService.loadSamples(from: refURL)
@@ -216,11 +223,20 @@ final class VoiceComparisonViewModel: ObservableObject {
                 result = compResult
                 state  = compResult.totalPairs == 0 ? .empty : .done
 
+            } catch is CancellationError {
+                stopAllSecurityAccess()
+                state = .idle          // volta para seleção silenciosamente
             } catch {
-                stopAllSecurityAccess() // garante liberação mesmo em caso de erro
+                stopAllSecurityAccess()
                 state = .error(error.localizedDescription)
             }
         }
+    }
+
+    /// Cancela a análise em andamento e volta para a tela de seleção.
+    func cancelComparison() {
+        analysisTask?.cancel()
+        analysisTask = nil
     }
 
     /// Reinicia o resultado e volta para a tela de seleção,
@@ -232,14 +248,21 @@ final class VoiceComparisonViewModel: ObservableObject {
         crossGenderContext = nil
     }
 
-    /// Limpa toda a pré-seleção: arquivos, hints e aba ativa.
-    /// Chamado pelo botão Atualizar — força o usuário a refazer a seleção do zero.
+    /// Limpa toda a pré-seleção: arquivos, hints, aba ativa e qualquer análise em curso.
+    /// Chamado pelo botão Voltar e pelo botão Atualizar.
     func clearSelection() {
+        // Cancela task antes de tudo — evita que um resultado chegue
+        // após o usuário já ter saído da tela
+        analysisTask?.cancel()
+        analysisTask = nil
         stopAllSecurityAccess()
         userSource         = nil
         referenceSource    = nil
         userVoiceHint      = nil
         referenceVoiceHint = nil
+        result             = nil
+        state              = .idle
+        crossGenderContext = nil
         activeTab          = 0
     }
 

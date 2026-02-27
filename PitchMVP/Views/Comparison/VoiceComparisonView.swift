@@ -25,24 +25,21 @@ struct VoiceComparisonView: View {
     @State private var showRefPicker  = false
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color(.systemBackground).ignoresSafeArea()
+        ZStack {
+            Color(.systemBackground).ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    header
+            VStack(spacing: 0) {
+                header
 
-                    switch vm.state {
-                    case .idle:        selectionContent
-                    case .analyzing:   analyzingView
-                    case .done:
-                        if let result = vm.result { resultContent(result: result) }
-                    case .empty:       emptyResult
-                    case .error(let msg): errorView(msg)
-                    }
+                switch vm.state {
+                case .idle:        selectionContent
+                case .analyzing:   analyzingView
+                case .done:
+                    if let result = vm.result { resultContent(result: result) }
+                case .empty:       emptyResult
+                case .error(let msg): errorView(msg)
                 }
             }
-            .navigationBarHidden(true)
         }
         // FIX: a closure do fileImporter apenas repassa a URL ao ViewModel.
         // Não chama mais start/stop — o ViewModel gerencia o acesso completo.
@@ -228,6 +225,17 @@ struct VoiceComparisonView: View {
             Text(vm.state.stepMessage)
                 .font(.system(size: 14, design: .rounded)).foregroundStyle(.secondary)
                 .animation(.easeOut, value: vm.state.stepMessage)
+            Button {
+                withAnimation { vm.cancelComparison() }
+            } label: {
+                Text("Cancelar")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(Capsule())
+            }
             Spacer()
         }
         .frame(maxWidth: .infinity)
@@ -292,6 +300,33 @@ struct VoiceComparisonView: View {
             Text(msg)
                 .font(.system(size: 12, design: .rounded)).foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center).padding(.horizontal, 40)
+            HStack(spacing: 12) {
+                // Volta para seleção sem limpar arquivos — usuário só tenta de novo
+                Button {
+                    withAnimation { vm.reset() }
+                } label: {
+                    Text("Voltar")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(Color(.secondarySystemBackground))
+                        .clipShape(Capsule())
+                }
+                // Tenta rodar a comparação novamente com os mesmos arquivos
+                Button {
+                    vm.startComparison()
+                } label: {
+                    Text("Tentar novamente")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(Color.orange)
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(.top, 4)
             Spacer()
         }
     }
