@@ -1,11 +1,29 @@
 // VoiceComparisonViewModel+Supabase.swift
 // PitchMVP
 //
-// FIX v4:
-// • userVoiceHint e referenceVoiceHint agora são Optional<VoiceRangeHint>
-//   nil = não selecionado ainda
-// • canCompare exige fonte + hint selecionados em ambos os lados
-// • CrossGenderContext.analyze recebe hints explícitos — sem inferência por MIDI
+// FIX v5 — Security-scoped URL gerenciada corretamente:
+//
+// PROBLEMA ANTERIOR:
+//   VoiceComparisonView chamava url.stopAccessingSecurityScopedResource()
+//   imediatamente após selectUserExternal/selectReferenceExternal. Como o
+//   fluxo é assíncrono (usuário ainda precisa escolher o registro e clicar
+//   Comparar), a URL ficava inacessível quando loadSamples() era chamado,
+//   causando falha silenciosa na leitura do arquivo externo.
+//
+// SOLUÇÃO:
+//   O ViewModel é responsável pelo ciclo de vida do acesso security-scoped.
+//   • selectUserExternal/selectReferenceExternal chamam startAccessingSecurityScopedResource
+//     e armazenam a URL no set securityScopedURLs.
+//   • stopAllSecurityAccess() é chamado pelo ViewModel em dois momentos:
+//     1. após loadSamples() completar (dentro de startComparison)
+//     2. em reset(), para limpar qualquer acesso pendente
+//   • A View NÃO gerencia mais o acesso — apenas chama o fileImporter e
+//     repassa a URL pura para o ViewModel.
+//
+// FIX v4 (mantidos):
+//   • userVoiceHint e referenceVoiceHint são Optional<VoiceRangeHint>
+//   • canCompare exige fonte + hint selecionados em ambos os lados
+//   • CrossGenderContext.analyze recebe hints explícitos
 
 import Foundation
 import SwiftUI
@@ -17,9 +35,7 @@ final class VoiceComparisonViewModel: ObservableObject {
     @Published var userSource: AudioSource?      = nil
     @Published var referenceSource: AudioSource? = nil
 
-    // MARK: - Hints de registro vocal (Optional — nil = não selecionado)
-    // O botão Comparar fica desabilitado enquanto qualquer hint for nil.
-    // Isso elimina o fallback por inferência de áudio que causava falsos positivos.
+    // MARK: - Hints de registro vocal
 
     @Published var userVoiceHint: VoiceRangeHint?      = nil
     @Published var referenceVoiceHint: VoiceRangeHint? = nil
@@ -41,6 +57,14 @@ final class VoiceComparisonViewModel: ObservableObject {
 
     let bundleFiles: [String] = ["voz", "voz2", "vozm1", "voz3", "voz5"]
 
+    // MARK: - Security-Scoped URL Management
+    //
+    // URLs externas (fileImporter) requerem startAccessingSecurityScopedResource()
+    // para serem lidas. O acesso deve ser mantido até que loadSamples() complete.
+    // Este set garante que as URLs permaneçam acessíveis durante toda a comparação.
+
+    private var securityScopedURLs: Set<URL> = []
+
     // MARK: - Dependências
 
     private let repository   = SupabaseAudioRepository.shared
@@ -50,18 +74,16 @@ final class VoiceComparisonViewModel: ObservableObject {
 
     // MARK: - Computed
 
-    /// Requer: arquivo + hint selecionados nos dois lados.
     var canCompare: Bool {
         userSource != nil && referenceSource != nil
         && userVoiceHint != nil && referenceVoiceHint != nil
     }
 
-    /// Mensagem explicativa para o botão desabilitado — exibida na UI.
     var compareBlockReason: String? {
-        if userSource == nil       { return "Selecione sua voz" }
-        if referenceSource == nil  { return "Selecione a referência" }
-        if userVoiceHint == nil    { return "Selecione o registro da sua voz" }
-        if referenceVoiceHint == nil { return "Selecione o registro da referência" }
+        if userSource == nil          { return "Selecione sua voz" }
+        if referenceSource == nil     { return "Selecione a referência" }
+        if userVoiceHint == nil       { return "Selecione o registro da sua voz" }
+        if referenceVoiceHint == nil  { return "Selecione o registro da referência" }
         return nil
     }
 
@@ -87,12 +109,43 @@ final class VoiceComparisonViewModel: ObservableObject {
     // MARK: - Seleção
     // ─────────────────────────────────────────────────────────────────────────
 
-    func selectUser(remote file: RemoteAudioFile)  { userSource = .remote(file); withAnimation { activeTab = 1 } }
-    func selectReference(remote file: RemoteAudioFile) { referenceSource = .remote(file) }
-    func selectUserFromBundle(_ name: String)       { userSource = .bundle(name); withAnimation { activeTab = 1 } }
-    func selectReferenceFromBundle(_ name: String)  { referenceSource = .bundle(name) }
-    func selectUserExternal(url: URL)               { userSource = .external(url); withAnimation { activeTab = 1 } }
-    func selectReferenceExternal(url: URL)          { referenceSource = .external(url) }
+    func selectUser(remote file: RemoteAudioFile) {
+        userSource = .remote(file)
+        withAnimation { activeTab = 1 }
+    }
+
+    func selectReference(remote file: RemoteAudioFile) {
+        referenceSource = .remote(file)
+    }
+
+    func selectUserFromBundle(_ name: String) {
+        userSource = .bundle(name)
+        withAnimation { activeTab = 1 }
+    }
+
+    func selectReferenceFromBundle(_ name: String) {
+        referenceSource = .bundle(name)
+    }
+
+    /// FIX: inicia e mantém o acesso security-scoped.
+    /// A View NÃO deve chamar stop — o ViewModel gerencia o ciclo completo.
+    func selectUserExternal(url: URL) {
+        stopSecurityAccess(for: userSource) // libera acesso anterior se havia outro externo
+        if url.startAccessingSecurityScopedResource() {
+            securityScopedURLs.insert(url)
+        }
+        userSource = .external(url)
+        withAnimation { activeTab = 1 }
+    }
+
+    /// FIX: idem para a referência externa.
+    func selectReferenceExternal(url: URL) {
+        stopSecurityAccess(for: referenceSource)
+        if url.startAccessingSecurityScopedResource() {
+            securityScopedURLs.insert(url)
+        }
+        referenceSource = .external(url)
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: - Comparação
@@ -133,7 +186,10 @@ final class VoiceComparisonViewModel: ObservableObject {
                     voiceHint: uHint
                 )
 
-                // 100% determinístico — sem inferência por áudio
+                // FIX: libera acesso security-scoped após loadSamples() completar.
+                // Neste ponto os dados já estão em memória — a URL não é mais necessária.
+                stopAllSecurityAccess()
+
                 let cgContext = CrossGenderContext.analyze(
                     userHint: uHint,
                     referenceHint: rHint,
@@ -161,16 +217,49 @@ final class VoiceComparisonViewModel: ObservableObject {
                 state  = compResult.totalPairs == 0 ? .empty : .done
 
             } catch {
+                stopAllSecurityAccess() // garante liberação mesmo em caso de erro
                 state = .error(error.localizedDescription)
             }
         }
     }
 
+    /// Reinicia o resultado e volta para a tela de seleção,
+    /// mantendo os arquivos e hints — o usuário só quis ver o resultado de novo.
     func reset() {
+        stopAllSecurityAccess()
         result             = nil
         state              = .idle
         crossGenderContext = nil
-        // Mantém hints — usuário provavelmente repete o mesmo par de registros
+    }
+
+    /// Limpa toda a pré-seleção: arquivos, hints e aba ativa.
+    /// Chamado pelo botão Atualizar — força o usuário a refazer a seleção do zero.
+    func clearSelection() {
+        stopAllSecurityAccess()
+        userSource         = nil
+        referenceSource    = nil
+        userVoiceHint      = nil
+        referenceVoiceHint = nil
+        activeTab          = 0
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Security-Scoped URL Helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Para o acesso security-scoped de uma source externa específica.
+    /// Usado ao trocar a seleção — libera o acesso anterior antes de iniciar o novo.
+    private func stopSecurityAccess(for source: AudioSource?) {
+        guard case .external(let url) = source else { return }
+        url.stopAccessingSecurityScopedResource()
+        securityScopedURLs.remove(url)
+    }
+
+    /// Para todos os acessos security-scoped pendentes.
+    /// Chamado após loadSamples() completar ou em reset().
+    private func stopAllSecurityAccess() {
+        securityScopedURLs.forEach { $0.stopAccessingSecurityScopedResource() }
+        securityScopedURLs.removeAll()
     }
 
     // ─────────────────────────────────────────────────────────────────────────

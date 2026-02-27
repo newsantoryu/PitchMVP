@@ -1,16 +1,24 @@
 // VoiceComparisonView.swift
 // PitchMVP
 //
-// v5 — VoiceRegistryCard fixo acima das abas:
-// • Card com ambos os seletores de registro sempre visível antes das abas de arquivo
-// • Pickers removidos de dentro das abas — não ficam mais escondidos
-// • Borda laranja quando registro não selecionado, verde quando completo
-// • compareBlockReason exibido abaixo do botão Comparar
+// FIX v6 — Security-scoped URL gerenciada pelo ViewModel:
+//
+// ANTES:
+//   O fileImporter chamava startAccessing → selectExternal → stopAccessing
+//   na mesma closure. O stop era prematuro — quando startComparison() rodava
+//   depois, a URL já estava inacessível (erro silencioso de leitura de arquivo).
+//
+// AGORA:
+//   A View apenas repassa a URL para o ViewModel via selectUserExternal /
+//   selectReferenceExternal. O ViewModel é responsável por iniciar, manter
+//   e encerrar o acesso security-scoped no momento correto (após loadSamples).
 
 import SwiftUI
 import UniformTypeIdentifiers
 
 struct VoiceComparisonView: View {
+
+    @Environment(\.dismiss) private var dismiss
 
     @StateObject private var vm = VoiceComparisonViewModel()
     @State private var showUserPicker = false
@@ -36,22 +44,20 @@ struct VoiceComparisonView: View {
             }
             .navigationBarHidden(true)
         }
+        // FIX: a closure do fileImporter apenas repassa a URL ao ViewModel.
+        // Não chama mais start/stop — o ViewModel gerencia o acesso completo.
         .fileImporter(isPresented: $showUserPicker,
                       allowedContentTypes: [UTType.audio, .wav, .mp3],
                       allowsMultipleSelection: false) { result in
             if case .success(let urls) = result, let url = urls.first {
-                let ok = url.startAccessingSecurityScopedResource()
                 vm.selectUserExternal(url: url)
-                if ok { url.stopAccessingSecurityScopedResource() }
             }
         }
         .fileImporter(isPresented: $showRefPicker,
                       allowedContentTypes: [UTType.audio, .wav, .mp3],
                       allowsMultipleSelection: false) { result in
             if case .success(let urls) = result, let url = urls.first {
-                let ok = url.startAccessingSecurityScopedResource()
                 vm.selectReferenceExternal(url: url)
-                if ok { url.stopAccessingSecurityScopedResource() }
             }
         }
         .task { await vm.loadRemoteFiles() }
@@ -61,6 +67,20 @@ struct VoiceComparisonView: View {
 
     private var header: some View {
         HStack(alignment: .bottom) {
+
+            // Botão de voltar — sempre visível, limpa seleção antes de sair
+            Button {
+                vm.clearSelection()
+                dismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(8)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(Circle())
+            }
+
             VStack(alignment: .leading, spacing: 4) {
                 Text("COMPARAÇÃO")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -68,8 +88,12 @@ struct VoiceComparisonView: View {
                 Text("Vocal")
                     .font(.system(size: 28, weight: .thin, design: .rounded))
             }
+            .padding(.leading, 4)
+
             Spacer()
+
             if vm.state == .done {
+                // Resultado visível → volta para seleção mantendo arquivos/hints
                 Button { withAnimation { vm.reset() } } label: {
                     Image(systemName: "arrow.counterclockwise")
                         .font(.system(size: 15, weight: .medium))
@@ -78,6 +102,18 @@ struct VoiceComparisonView: View {
                         .background(Color(.secondarySystemBackground))
                         .clipShape(Circle())
                 }
+            } else if vm.state == .idle,
+                      vm.userSource != nil || vm.referenceSource != nil {
+                // Seleção em andamento → limpa tudo e reinicia do zero
+                Button { withAnimation { vm.clearSelection() } } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .padding(8)
+                        .background(Color(.secondarySystemBackground))
+                        .clipShape(Circle())
+                }
+                .transition(.opacity.combined(with: .scale))
             }
         }
         .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 16)
@@ -88,7 +124,6 @@ struct VoiceComparisonView: View {
     private var selectionContent: some View {
         VStack(spacing: 0) {
 
-            // Status dos arquivos selecionados
             SelectionStatusBar(
                 userFile: vm.userDisplayName,
                 refFile:  vm.refDisplayName,
@@ -98,9 +133,6 @@ struct VoiceComparisonView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 16)
 
-            // ── NOVO: Card de registro fixo, sempre visível ───────────────────
-            // Posicionado ANTES das abas para ser impossível de ignorar.
-            // Borda laranja enquanto incompleto, verde quando ambos selecionados.
             VoiceRegistryCard(
                 userHint: $vm.userVoiceHint,
                 referenceHint: $vm.referenceVoiceHint
@@ -108,7 +140,6 @@ struct VoiceComparisonView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 16)
 
-            // Abas de arquivo (sem pickers internos — foram movidos para o card acima)
             VoiceTabPicker(activeTab: $vm.activeTab)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 16)
@@ -125,7 +156,10 @@ struct VoiceComparisonView: View {
                     onSelectRemote:   { vm.selectUser(remote: $0) },
                     onSelectBundle:   { vm.selectUserFromBundle($0) },
                     onImportExternal: { showUserPicker = true },
-                    onRefreshRemote:  { Task { await vm.loadRemoteFiles() } }
+                    onRefreshRemote:  {
+                        vm.clearSelection()
+                        Task { await vm.loadRemoteFiles() }
+                    }
                 )
             } else {
                 RemoteFilePickerView(
@@ -139,7 +173,10 @@ struct VoiceComparisonView: View {
                     onSelectRemote:   { vm.selectReference(remote: $0) },
                     onSelectBundle:   { vm.selectReferenceFromBundle($0) },
                     onImportExternal: { showRefPicker = true },
-                    onRefreshRemote:  { Task { await vm.loadRemoteFiles() } }
+                    onRefreshRemote:  {
+                        vm.clearSelection()
+                        Task { await vm.loadRemoteFiles() }
+                    }
                 )
             }
 
@@ -168,7 +205,6 @@ struct VoiceComparisonView: View {
             .disabled(!vm.canCompare)
             .animation(.easeOut(duration: 0.2), value: vm.canCompare)
 
-            // Motivo pelo qual está desabilitado — guia o usuário para o próximo passo
             if let reason = vm.compareBlockReason {
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.up")
@@ -468,258 +504,6 @@ private struct SummaryMetric: View {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MARK: - NoteComparisonCard
-// ─────────────────────────────────────────────────────────────────────────────
-
-struct NoteComparisonCard: View {
-
-    let comparison: NoteComparison
-    let crossGenderContext: CrossGenderContext?
-    @State private var expanded = false
-
-    private var gradeColor: Color {
-        switch comparison.grade {
-        case .excellent:  return .green
-        case .good:       return .blue
-        case .fair:       return .orange
-        case .needsWork:  return .red
-        case .incomplete: return Color(.tertiaryLabel)
-        }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Button {
-                withAnimation(.spring(duration: 0.3)) { expanded.toggle() }
-            } label: {
-                HStack(spacing: 14) {
-                    Text("\(comparison.index + 1)")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.tertiary).frame(width: 20, alignment: .trailing)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(comparison.noteName)
-                            .font(.system(size: 20, weight: .light, design: .rounded))
-
-                        if comparison.userSegment != nil && comparison.referenceSegment != nil {
-                            HStack(spacing: 3) {
-                                Image(systemName: comparison.pitchClassMatch ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                    .font(.system(size: 8))
-                                Text(comparison.pitchClassMatch ? "Grau correto" : "Grau errado (\(comparison.userPitchClass ?? "?"))")
-                                    .font(.system(size: 9, design: .rounded))
-                            }
-                            .foregroundStyle(comparison.pitchClassMatch ? Color.green : Color.red)
-                        }
-
-                        OctaveShiftTag(
-                            userNote: comparison.userSegment,
-                            referenceNote: comparison.referenceSegment,
-                            crossGenderContext: crossGenderContext
-                        )
-                    }
-                    .frame(width: 110, alignment: .leading)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        if let cents = comparison.centsDelta {
-                            Text(String(format: "%+.1f¢", cents))
-                                .font(.system(size: 13, weight: .medium, design: .rounded))
-                                .monospacedDigit()
-                                .foregroundStyle(abs(cents) < 10 ? .green : .primary)
-                        }
-                        if let match = comparison.melodicContourMatch {
-                            HStack(spacing: 3) {
-                                contourIcon(comparison.userContourDirection, color: .orange)
-                                contourIcon(comparison.referenceContourDirection, color: .blue)
-                                Text(match ? "✓" : "✗")
-                                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                                    .foregroundStyle(match ? Color.green : Color.red)
-                            }
-                        }
-                    }
-
-                    Spacer()
-
-                    VStack(spacing: 1) {
-                        Image(systemName: "clock").font(.system(size: 8)).foregroundStyle(.tertiary)
-                        Text(comparison.startTimeFormatted)
-                            .font(.system(size: 11, weight: .medium, design: .rounded))
-                            .monospacedDigit().foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 7).padding(.vertical, 4)
-                    .background(Color(.tertiarySystemFill))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-
-                    HStack(spacing: 4) {
-                        Image(systemName: comparison.grade.systemImage).font(.system(size: 12))
-                        Text(comparison.grade.label).font(.system(size: 11, weight: .semibold, design: .rounded))
-                    }
-                    .foregroundStyle(gradeColor)
-                    .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(gradeColor.opacity(0.1))
-                    .clipShape(Capsule())
-
-                    Image(systemName: expanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 11)).foregroundStyle(.tertiary)
-                }
-                .padding(.horizontal, 16).padding(.vertical, 14)
-            }
-            .buttonStyle(.plain)
-
-            if expanded {
-                VStack(spacing: 16) {
-                    Divider().padding(.horizontal, 16)
-                    ComparisonMetricsGrid(
-                        comparison: comparison,
-                        isCrossGender: crossGenderContext?.isCrossGender ?? false
-                    )
-                    .padding(.horizontal, 16)
-                    OverlappedPitchCurveView(comparison: comparison).padding(.horizontal, 16)
-                    if comparison.userSegment?.vibrato != nil || comparison.referenceSegment?.vibrato != nil {
-                        VibratoComparisonRow(comparison: comparison).padding(.horizontal, 16)
-                    }
-                }
-                .padding(.bottom, 16)
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-        }
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color(.secondarySystemBackground)))
-    }
-
-    private func contourIcon(_ direction: ContourDirection, color: Color) -> some View {
-        let icon: String
-        switch direction {
-        case .up:    icon = "arrow.up"
-        case .down:  icon = "arrow.down"
-        case .same:  icon = "minus"
-        case .unset: icon = "circle"
-        }
-        return Image(systemName: icon).font(.system(size: 8, weight: .semibold)).foregroundStyle(color)
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MARK: - ComparisonMetricsGrid
-// ─────────────────────────────────────────────────────────────────────────────
-
-private struct ComparisonMetricsGrid: View {
-    let comparison: NoteComparison
-    let isCrossGender: Bool
-
-    var body: some View {
-        VStack(spacing: 10) {
-            if isCrossGender,
-               let u = comparison.userSegment,
-               let r = comparison.referenceSegment,
-               abs(u.midiNote - r.midiNote) > 6 {
-                HStack(spacing: 6) {
-                    Image(systemName: "person.2.fill").font(.system(size: 10)).foregroundStyle(.secondary)
-                    Text("Vozes em oitavas diferentes — desvio medido individualmente")
-                        .font(.system(size: 10, design: .rounded)).foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 10).padding(.vertical, 6)
-                .background(Color(.tertiarySystemFill).opacity(0.6))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-
-            metricRow(label: "Afinação",
-                userValue: comparison.userSegment.map      { String(format: "%.1f¢", $0.averageCentsDeviation) } ?? "—",
-                refValue:  comparison.referenceSegment.map { String(format: "%.1f¢", $0.averageCentsDeviation) } ?? "—",
-                delta:     comparison.centsDelta.map       { String(format: "%+.1f¢", $0) })
-            metricRow(label: "Estável",
-                userValue: comparison.userSegment.map      { String(format: "%.0f%%", $0.stabilityPercentage) } ?? "—",
-                refValue:  comparison.referenceSegment.map { String(format: "%.0f%%", $0.stabilityPercentage) } ?? "—",
-                delta:     comparison.stabilityDelta.map   { String(format: "%+.0f%%", $0) })
-            metricRow(label: "Duração",
-                userValue: comparison.userSegment.map      { String(format: "%.2fs", $0.durationSeconds) } ?? "—",
-                refValue:  comparison.referenceSegment.map { String(format: "%.2fs", $0.durationSeconds) } ?? "—",
-                delta:     nil)
-
-            if let u = comparison.userSegment, let r = comparison.referenceSegment {
-                HStack {
-                    Text("Nota").font(.system(size: 12, design: .rounded)).foregroundStyle(.secondary).frame(width: 80, alignment: .leading)
-                    Spacer()
-                    VStack(spacing: 1) {
-                        Text("REF").font(.system(size: 8, weight: .semibold, design: .rounded)).tracking(1).foregroundStyle(.blue.opacity(0.7))
-                        Text(r.noteName).font(.system(size: 13, weight: .medium, design: .rounded)).foregroundStyle(.blue)
-                    }.frame(width: 56)
-                    VStack(spacing: 1) {
-                        Text("VOCÊ").font(.system(size: 8, weight: .semibold, design: .rounded)).tracking(1).foregroundStyle(.orange.opacity(0.7))
-                        Text(u.noteName).font(.system(size: 13, weight: .medium, design: .rounded)).foregroundStyle(.orange)
-                    }.frame(width: 56)
-                    Image(systemName: comparison.pitchClassMatch ? "checkmark.circle.fill" : "xmark.circle")
-                        .font(.system(size: 14))
-                        .foregroundStyle(comparison.pitchClassMatch ? Color.green : Color.red)
-                        .frame(width: 52, alignment: .trailing)
-                }
-            }
-        }
-    }
-
-    private func metricRow(label: String, userValue: String, refValue: String, delta: String?) -> some View {
-        HStack {
-            Text(label).font(.system(size: 12, design: .rounded)).foregroundStyle(.secondary).frame(width: 80, alignment: .leading)
-            Spacer()
-            VStack(spacing: 1) {
-                Text("REF").font(.system(size: 8, weight: .semibold, design: .rounded)).tracking(1).foregroundStyle(.blue.opacity(0.7))
-                Text(refValue).font(.system(size: 13, weight: .medium, design: .rounded)).foregroundStyle(.blue)
-            }.frame(width: 56)
-            VStack(spacing: 1) {
-                Text("VOCÊ").font(.system(size: 8, weight: .semibold, design: .rounded)).tracking(1).foregroundStyle(.orange.opacity(0.7))
-                Text(userValue).font(.system(size: 13, weight: .medium, design: .rounded)).foregroundStyle(.orange)
-            }.frame(width: 56)
-            if let d = delta {
-                Text(d).font(.system(size: 12, weight: .semibold, design: .rounded)).monospacedDigit()
-                    .foregroundStyle(d.hasPrefix("+") ? Color.green : Color.red)
-                    .frame(width: 52, alignment: .trailing)
-            } else {
-                Spacer().frame(width: 52)
-            }
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MARK: - VibratoComparisonRow (inalterado)
-// ─────────────────────────────────────────────────────────────────────────────
-
-private struct VibratoComparisonRow: View {
-    let comparison: NoteComparison
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("VIBRATO").font(.system(size: 10, weight: .semibold, design: .rounded)).tracking(2).foregroundStyle(.tertiary)
-            HStack(spacing: 12) {
-                vibratoCell(label: "REF",  vibrato: comparison.referenceSegment?.vibrato, color: .blue)
-                vibratoCell(label: "VOCÊ", vibrato: comparison.userSegment?.vibrato,      color: .orange)
-            }
-        }
-        .padding(12)
-        .background(Color(.tertiarySystemFill).opacity(0.5))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-    }
-
-    private func vibratoCell(label: String, vibrato: VibratoAnalysis?, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label).font(.system(size: 9, weight: .bold, design: .rounded)).tracking(1.5).foregroundStyle(color.opacity(0.7))
-            if let v = vibrato {
-                HStack(spacing: 12) {
-                    vibratoStat("TAXA",  value: String(format: "%.1fHz", v.rateHz))
-                    vibratoStat("PROF.", value: String(format: "%.0f¢",  v.depthCents))
-                    vibratoStat("REG.",  value: String(format: "%.0f%%", v.regularity * 100))
-                }
-                Text(v.quality.rawValue).font(.system(size: 11, weight: .medium, design: .rounded)).foregroundStyle(color)
-            } else {
-                Text("Não detectado").font(.system(size: 12, design: .rounded)).foregroundStyle(.tertiary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func vibratoStat(_ label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(label).font(.system(size: 8, design: .rounded)).foregroundStyle(.quaternary)
-            Text(value).font(.system(size: 12, weight: .medium, design: .rounded))
-        }
-    }
+#Preview {
+    VoiceComparisonView()
 }

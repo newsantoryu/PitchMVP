@@ -40,6 +40,7 @@
 		578312412F4A68560064D5F6 /* PitchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578312402F4A68560064D5F6 /* PitchResult.swift */; };
 		578312482F4A70530064D5F6 /* HPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578312472F4A70530064D5F6 /* HPS.swift */; };
 		5783124A2F4A80570064D5F6 /* voz5.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578312492F4A80570064D5F6 /* voz5.wav */; };
+		57841A2C2F51F9700015E111 /* NoteComparisonCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57841A2B2F51F9620015E111 /* NoteComparisonCard.swift */; };
 		578A36AF2F4B4DBB00A45D9C /* vozm1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578A36AE2F4B4DBA00A45D9C /* vozm1.wav */; };
 		578A36B12F4B524300A45D9C /* TunerLabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */; };
 		578A36B32F4B90D600A45D9C /* PitchFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578A36B22F4B90D600A45D9C /* PitchFeedback.swift */; };
@@ -111,6 +112,7 @@
 		578312402F4A68560064D5F6 /* PitchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchResult.swift; sourceTree = "<group>"; };
 		578312472F4A70530064D5F6 /* HPS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HPS.swift; sourceTree = "<group>"; };
 		578312492F4A80570064D5F6 /* voz5.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = voz5.wav; sourceTree = "<group>"; };
+		57841A2B2F51F9620015E111 /* NoteComparisonCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteComparisonCard.swift; sourceTree = "<group>"; };
 		578A36AE2F4B4DBA00A45D9C /* vozm1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = vozm1.wav; sourceTree = "<group>"; };
 		578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerLabViewModel.swift; sourceTree = "<group>"; };
 		578A36B22F4B90D600A45D9C /* PitchFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchFeedback.swift; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 		57BC1E6D2F4F85FD0033BAF9 /* Comparison */ = {
 			isa = PBXGroup;
 			children = (
+				57841A2B2F51F9620015E111 /* NoteComparisonCard.swift */,
 				5780B2392F50DC0B00E935C5 /* CrossGenderBanner.swift */,
 				572FD9C62F4E3CF900DE544B /* VoiceComparisonView.swift */,
 				572FD9CC2F4E3E1300DE544B /* OverlappedPitchCurveView.swift */,
@@ -514,6 +517,7 @@
 				578A36B32F4B90D600A45D9C /* PitchFeedback.swift in Sources */,
 				5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */,
 				578312482F4A70530064D5F6 /* HPS.swift in Sources */,
+				57841A2C2F51F9700015E111 /* NoteComparisonCard.swift in Sources */,
 				577970ED2F4D04EC00E879B5 /* YINDetector.swift in Sources */,
 				577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */,
 				578A36BB2F4B9C4F00A45D9C /* TrainingNotes.swift in Sources */,

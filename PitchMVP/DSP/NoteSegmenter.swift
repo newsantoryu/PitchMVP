@@ -1,42 +1,28 @@
 // NoteSegmenter.swift
 // PitchMVP
 //
-// FIX v2:
-// 1. semitoneThreshold: 0.6 → 0.8
-//    Motivo: 0.6 semitons (60 cents) era insuficiente para vozes com vibrato natural
-//    (20–50 cents de profundidade). O threshold baixo fragmentava uma nota sustentada
-//    em múltiplos segmentos. 0.8 (80 cents) é robusto contra vibrato sem perder
-//    sensibilidade a mudanças de nota reais (que normalmente são ≥ 1 semitom).
+// FIX v3 — default voiceHint corrigido:
 //
-// 2. VoiceRangeHint — expectedRange passado ao VocalPitchDetector
-//    Motivo: YIN pode errar uma oitava em vozes com harmônicos fortes (baixo/barítono
-//    cantando forte). O VocalPitchDetector já suporta `expectedRange` para correção
-//    de sub-harmônicos, mas o NoteSegmenter nunca o usava.
-//    Agora: `analyze(samples:sampleRate:voiceHint:)` aceita um VoiceRangeHint opcional
-//    que limita a busca do YIN à faixa vocal esperada — elimina erros de oitava
-//    sem afetar a precisão dentro da faixa correta.
+// ANTES: voiceHint: VoiceRangeHint = .custom(130...700)
+//   Problema: faixa 130–700 Hz cortava silenciosamente sopranos (até ~1050 Hz)
+//   e baixos graves (~80 Hz). Era um ".automatic" disfarçado de valor explícito,
+//   mas com cobertura incompleta.
+//
+// AGORA: voiceHint: VoiceRangeHint = .custom(80...1100)
+//   Cobre toda a extensão de vozes humanas (baixo profundo → soprano agudo),
+//   idêntica à faixa usada pelo YINDetector e FrequencyEstimator.
+//   Callers de produção (VoiceComparisonViewModel) sempre passam hint explícito —
+//   o default serve apenas para testes e previews, e agora não penaliza nenhuma voz.
+//
+// FIX v2 (mantidos):
+// 1. semitoneThreshold: 0.6 → 0.8 (robusto contra vibrato)
+// 2. expectedRange passado ao VocalPitchDetector para correção de oitava
 
 import Foundation
 import Accelerate
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - VoiceRangeHint
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Dica de faixa vocal para orientar o detector de pitch.
-///
-/// Usado para evitar erros de oitava em vozes com harmônicos fortes.
-/// O NoteSegmenter passa esse hint ao VocalPitchDetector como `expectedRange`.
-///
-/// Uso:
-/// ```swift
-/// segmenter.analyze(samples: samples, sampleRate: 44100, voiceHint: .male)
-/// segmenter.analyze(samples: samples, sampleRate: 44100, voiceHint: .female)
-/// segmenter.analyze(samples: samples, sampleRate: 44100, voiceHint: .custom(130...700))
-/// ```
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MARK: - NoteSegment (inalterado)
+// MARK: - NoteSegment
 // ─────────────────────────────────────────────────────────────────────────────
 
 struct NoteSegment: Identifiable {
@@ -57,7 +43,7 @@ struct NoteSegment: Identifiable {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - VibratoAnalysis (inalterado)
+// MARK: - VibratoAnalysis
 // ─────────────────────────────────────────────────────────────────────────────
 
 struct VibratoAnalysis {
@@ -109,11 +95,7 @@ final class NoteSegmenter {
 
     private let frameSize = 4096
     private let hopSize   = 512
-
-    // FIX: era 0.6 — fragmentava notas com vibrato natural (20–50 cents).
-    // 0.8 semitons (80 cents) é robusto contra vibrato sem perder mudanças reais.
-    private let semitoneThreshold: Float = 0.8
-
+    private let semitoneThreshold: Float = 0.8   // FIX v2: era 0.6
     private let minDurationSeconds: Float = 0.15
     private let detector = VocalPitchDetector()
 
@@ -124,15 +106,15 @@ final class NoteSegmenter {
     /// - Parameters:
     ///   - samples:    Amostras PCM Float normalizadas em [-1, 1]
     ///   - sampleRate: Taxa de amostragem em Hz
-    ///   - voiceHint:  Faixa vocal esperada para correção de oitava no YIN.
-    ///                 Use `.male` para barítono/baixo/tenor,
-    ///                 `.female` para contralto/mezzo/soprano,
-    ///                 `.automatic` para comportamento sem restrição (padrão).
-    /// - Returns: Array de NoteSegment ordenado cronologicamente
+    ///   - voiceHint:  Faixa vocal para correção de oitava no YIN.
+    ///                 Use `.male` ou `.female` para vozes humanas conhecidas.
+    ///                 O default `.custom(80...1100)` cobre toda a extensão vocal
+    ///                 humana e é adequado para testes e previews.
+    ///                 Em produção, sempre passe hint explícito via ViewModel.
     func analyze(
         samples: [Float],
         sampleRate: Float,
-        voiceHint: VoiceRangeHint = .custom(130...700)   // ← NOVO parâmetro, não-breaking
+        voiceHint: VoiceRangeHint = .custom(80...1100)   // FIX v3: era .custom(130...700)
     ) -> [NoteSegment] {
 
         var segments: [NoteSegment] = []
@@ -142,8 +124,6 @@ final class NoteSegmenter {
         var segmentStartTime: Float = 0
 
         let frameCount = (samples.count - frameSize) / hopSize
-
-        // Converte hint para ClosedRange uma vez, fora do loop
         let expectedRange = voiceHint.frequencyRange
 
         for frameIndex in 0..<frameCount {
@@ -155,11 +135,10 @@ final class NoteSegmenter {
             let frame = Array(samples[startSample..<endSample])
             let timeSeconds = Float(startSample) / sampleRate
 
-            // FIX: passa expectedRange ao detector para correção de oitava no YIN
             guard let result = detector.detect(
                 buffer: frame,
                 sampleRate: sampleRate,
-                expectedRange: expectedRange    // ← era sempre nil antes
+                expectedRange: expectedRange
             ) else {
                 if let _ = currentNoteMidi, !currentFrames.isEmpty {
                     let seg = buildSegment(
@@ -215,7 +194,7 @@ final class NoteSegmenter {
         return segments
     }
 
-    // MARK: - Construção de Segmento (inalterado)
+    // MARK: - Construção de Segmento
 
     private func buildSegment(
         frames: [(time: Float, frequency: Float)],
@@ -246,7 +225,10 @@ final class NoteSegmenter {
         let stability = Float(inTuneCount) / Float(centsOverTime.count) * 100
 
         let vibratoHopRate = sampleRate / Float(hopSize)
-        let vibratoAnalysis = analyzeVibrato(centsTimeSeries: centsOverTime, frameRate: vibratoHopRate)
+        let vibratoAnalysis = analyzeVibrato(
+            centsTimeSeries: centsOverTime,
+            frameRate: vibratoHopRate
+        )
 
         return NoteSegment(
             noteName: theory.noteName,
@@ -264,7 +246,7 @@ final class NoteSegmenter {
         )
     }
 
-    // MARK: - Análise de Vibrato (inalterado)
+    // MARK: - Análise de Vibrato
 
     private func analyzeVibrato(centsTimeSeries: [Float], frameRate: Float) -> VibratoAnalysis? {
 
@@ -321,7 +303,7 @@ final class NoteSegmenter {
         )
     }
 
-    // MARK: - Utilitários (inalterados)
+    // MARK: - Utilitários
 
     private func median(of values: [Float]) -> Float {
         guard !values.isEmpty else { return 0 }

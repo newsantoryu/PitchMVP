@@ -1,14 +1,16 @@
 // SupabaseStorageClient.swift
 // PitchMVP
 //
-// CACHE PERSISTENTE:
-//   Arquivos salvos em applicationSupportDirectory — nunca apagados pelo iOS.
-//   Invalidação por updated_at: ao baixar, compara o updated_at do Supabase
-//   com o valor registrado no manifesto local. Se mudou, re-baixa.
+// FIX v2:
+// • CacheManifest.persist() — removida escrita manual via arquivo tmp.
+//   `Data.write(to:options:.atomic)` já garante atomicidade via syscall do SO —
+//   o padrão tmp→move anterior criava uma janela de race condition quando dois
+//   downloads terminavam simultaneamente (ambos escreviam no mesmo .tmp e faziam
+//   moveItem concorrentemente, podendo corromper ou perder entradas do manifesto).
 //
-// MANIFESTO (cache_manifest.json):
-//   Dicionário [cacheKey: updatedAt] persistido em disco.
-//   Atualizado atomicamente a cada download para evitar corrução.
+// • persist() agora é chamado dentro do lock — garante que a escrita em disco
+//   reflita exatamente o estado do dicionário no momento em que o lock foi adquirido,
+//   eliminando a janela entre liberar o lock e escrever em disco.
 
 import Foundation
 
@@ -25,11 +27,11 @@ enum SupabaseStorageError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidURL:                   return "URL inválida"
-        case .httpError(let c, let m):      return "HTTP \(c): \(m)"
-        case .decodingError(let m):         return "Decode error: \(m)"
-        case .fileSystemError(let m):       return "File error: \(m)"
-        case .emptyResponse:                return "Resposta vazia"
+        case .invalidURL:              return "URL inválida"
+        case .httpError(let c, let m): return "HTTP \(c): \(m)"
+        case .decodingError(let m):    return "Decode error: \(m)"
+        case .fileSystemError(let m):  return "File error: \(m)"
+        case .emptyResponse:           return "Resposta vazia"
         }
     }
 }
@@ -42,18 +44,12 @@ struct SupabaseFileObject: Decodable, Identifiable, Hashable {
 
     let id: String?
     let name: String
-
-    /// ISO-8601 — ex: "2026-02-24T10:30:00.000Z"
-    /// Presente na resposta do LIST do Supabase Storage v1.
-    /// Usado como chave de invalidação do cache local.
     let updatedAt: String?
-
     let metadata: FileMetadata?
 
     struct FileMetadata: Decodable, Hashable {
         let size: Int?
         let mimetype: String?
-        /// ETag do objeto no storage — alternativa de invalidação se updatedAt não vier.
         let eTag: String?
 
         enum CodingKeys: String, CodingKey {
@@ -78,7 +74,6 @@ struct SupabaseFileObject: Decodable, Identifiable, Hashable {
         return String(format: "%.1f MB", kb / 1024)
     }
 
-    /// Chave de invalidação preferencial: updatedAt, fallback para eTag.
     var cacheValidator: String? { updatedAt ?? metadata?.eTag }
 
     func hash(into hasher: inout Hasher) { hasher.combine(name) }
@@ -89,17 +84,14 @@ struct SupabaseFileObject: Decodable, Identifiable, Hashable {
 // MARK: - CacheManifest
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Manifesto persistido em disco que mapeia cacheKey → cacheValidator (updated_at).
-/// Permite saber, sem fazer uma request de rede, se um arquivo em cache ainda é válido.
 private final class CacheManifest {
 
     private let url: URL
     private let fileManager = FileManager.default
-
-    /// Dicionário em memória — fonte de verdade durante a sessão.
     private var entries: [String: String] = [:]
 
-    // Lock para acesso thread-safe (leituras e escritas podem vir de tasks paralelas)
+    // Lock protege tanto o dicionário em memória quanto a escrita em disco.
+    // persist() é chamado dentro do lock para garantir consistência total.
     private let lock = NSLock()
 
     init(url: URL) {
@@ -114,13 +106,19 @@ private final class CacheManifest {
     }
 
     func setValidator(_ validator: String, for key: String) {
-        lock.withLock { entries[key] = validator }
-        persist()
+        // FIX: persist() dentro do lock — elimina janela de race condition
+        // entre liberar o lock e escrever em disco.
+        lock.withLock {
+            entries[key] = validator
+            persistLocked()
+        }
     }
 
     func removeEntry(for key: String) {
-        lock.withLock { entries.removeValue(forKey: key) }
-        persist()
+        lock.withLock {
+            entries.removeValue(forKey: key)
+            persistLocked()
+        }
     }
 
     func allKeys() -> [String] {
@@ -129,7 +127,6 @@ private final class CacheManifest {
 
     // MARK: - Persistência
 
-    /// Carrega o manifesto do disco na inicialização.
     private func load() {
         guard fileManager.fileExists(atPath: url.path),
               let data = try? Data(contentsOf: url),
@@ -139,20 +136,22 @@ private final class CacheManifest {
         print("[CacheManifest] Carregado: \(entries.count) entradas")
     }
 
-    /// Persiste o manifesto de forma atômica (escreve em tmp → move).
-    /// Atômico evita corrupção se o app for morto durante a escrita.
-    private func persist() {
+    /// Persiste atomicamente via `Data.write(to:options:.atomic)`.
+    ///
+    /// O SO (Darwin/APFS) implementa a atomicidade via rename(2) internamente —
+    /// idêntico ao padrão tmp→move, mas sem a janela de race condition quando
+    /// múltiplas tasks chamam persist() concorrentemente.
+    ///
+    /// IMPORTANTE: deve ser chamado com o lock já adquirido (sufixo "Locked").
+    private func persistLocked() {
         guard let data = try? JSONEncoder().encode(entries) else { return }
 
-        let tmpURL = url.deletingLastPathComponent()
-            .appendingPathComponent("cache_manifest.tmp")
-
         do {
-            try data.write(to: tmpURL, options: .atomic)
-            if fileManager.fileExists(atPath: url.path) {
-                try fileManager.removeItem(at: url)
-            }
-            try fileManager.moveItem(at: tmpURL, to: url)
+            // FIX: .atomic já usa tmp→rename internamente de forma thread-safe via SO.
+            // O padrão manual (tmp→removeItem→moveItem) que existia antes criava
+            // uma janela entre removeItem e moveItem onde outro processo podia
+            // sobrescrever, corrompendo ou perdendo o manifesto.
+            try data.write(to: url, options: .atomic)
         } catch {
             print("[CacheManifest] ⚠️ Falha ao persistir: \(error)")
         }
@@ -177,21 +176,14 @@ final class SupabaseStorageClient {
         config.timeoutIntervalForResource = 120
         self.session = URLSession(configuration: config)
 
-        // Garante que o diretório de cache existe antes de usar o manifesto
         let cacheDir = SupabaseConfig.cacheDirectory
-        try? fileManager.createDirectory(
-            at: cacheDir,
-            withIntermediateDirectories: true
-        )
-
+        try? fileManager.createDirectory(at: cacheDir, withIntermediateDirectories: true)
         self.manifest = CacheManifest(url: SupabaseConfig.cacheManifestURL)
 
         print("[Supabase] Cache em: \(cacheDir.path)")
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
     // MARK: - Request Builder
-    // ─────────────────────────────────────────────────────────────────────────
 
     private func makeRequest(url: URL, method: String = "GET") -> URLRequest {
         var request = URLRequest(url: url)
@@ -201,9 +193,7 @@ final class SupabaseStorageClient {
         return request
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
     // MARK: - Listar Arquivos
-    // ─────────────────────────────────────────────────────────────────────────
 
     func listFiles(
         bucket: String,
@@ -240,20 +230,8 @@ final class SupabaseStorageClient {
         return audio
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Download com Cache Persistente + Invalidação por updated_at
-    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Download com Cache Persistente
 
-    /// Baixa um arquivo do Supabase, usando cache persistente em disco.
-    ///
-    /// Lógica de decisão:
-    ///   1. Arquivo não existe em disco  → baixa
-    ///   2. Arquivo existe + sem validator no manifesto → baixa (estado inconsistente)
-    ///   3. Arquivo existe + validator bate com Supabase → retorna cache (HIT)
-    ///   4. Arquivo existe + validator diferente → re-baixa (arquivo mudou no Supabase)
-    ///
-    /// - Parameters:
-    ///   - remoteValidator: O `updated_at` (ou eTag) vindo da listagem — nil força re-download.
     func downloadAudio(
         bucket: String,
         userFolder: String,
@@ -265,28 +243,22 @@ final class SupabaseStorageClient {
         let cacheKey = makeCacheKey(bucket: bucket, userFolder: userFolder, fileName: fileName)
         let localURL = SupabaseConfig.cacheDirectory.appendingPathComponent(cacheKey)
 
-        // ── Verificação de cache ──────────────────────────────────────────────
         if fileManager.fileExists(atPath: localURL.path) {
             let cachedValidator = manifest.validator(for: cacheKey)
 
             if let remote = remoteValidator, let cached = cachedValidator {
                 if remote == cached {
-                    // Cache HIT: arquivo existe e não mudou no Supabase
                     print("[Supabase] CACHE HIT (\(remote)): \(fileName)")
                     return localURL
                 } else {
-                    // Cache STALE: arquivo mudou no Supabase → re-baixa
                     print("[Supabase] CACHE STALE: \(fileName) — remoto=\(remote) local=\(cached)")
                 }
             } else if remoteValidator == nil && cachedValidator != nil {
-                // Sem validator remoto (listagem offline?) → confia no cache existente
                 print("[Supabase] CACHE HIT (sem validator remoto): \(fileName)")
                 return localURL
             }
-            // Estado inconsistente (arquivo sem manifesto) → re-baixa por segurança
         }
 
-        // ── Download ──────────────────────────────────────────────────────────
         let downloadURL: URL
         if isPrivate {
             downloadURL = try await createSignedURL(
@@ -317,7 +289,6 @@ final class SupabaseStorageClient {
         print("[Supabase] DOWNLOAD status: \(httpResponse.statusCode) → \(fileName)")
         try validateHTTPResponse(httpResponse, data: nil)
 
-        // ── Move para cache persistente ───────────────────────────────────────
         do {
             if fileManager.fileExists(atPath: localURL.path) {
                 try fileManager.removeItem(at: localURL)
@@ -327,9 +298,6 @@ final class SupabaseStorageClient {
             throw SupabaseStorageError.fileSystemError(error.localizedDescription)
         }
 
-        // ── Registra no manifesto ─────────────────────────────────────────────
-        // Usa o validator remoto se disponível; fallback para timestamp atual
-        // para que na próxima sessão saibamos que este arquivo já foi baixado.
         let validatorToStore = remoteValidator ?? ISO8601DateFormatter().string(from: Date())
         manifest.setValidator(validatorToStore, for: cacheKey)
 
@@ -337,28 +305,14 @@ final class SupabaseStorageClient {
         return localURL
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Restaurar Cache da Sessão Anterior
-    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Cache Utilities
 
-    /// Verifica se um arquivo está disponível no cache persistente.
-    /// Chamado pelo Repository ao reconstituir a lista de arquivos — permite
-    /// marcar `isDownloaded = true` sem fazer nenhuma request de rede.
-    func cachedURL(
-        bucket: String,
-        userFolder: String,
-        fileName: String
-    ) -> URL? {
+    func cachedURL(bucket: String, userFolder: String, fileName: String) -> URL? {
         let cacheKey = makeCacheKey(bucket: bucket, userFolder: userFolder, fileName: fileName)
         let localURL = SupabaseConfig.cacheDirectory.appendingPathComponent(cacheKey)
         return fileManager.fileExists(atPath: localURL.path) ? localURL : nil
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Cache Management
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /// Remove todos os arquivos de cache e limpa o manifesto.
     func clearCache() throws {
         let files = try fileManager.contentsOfDirectory(
             at: SupabaseConfig.cacheDirectory,
@@ -368,7 +322,6 @@ final class SupabaseStorageClient {
         print("[Supabase] Cache limpo: \(files.count) arquivos removidos")
     }
 
-    /// Tamanho total do cache em bytes.
     func cacheSize() -> Int64 {
         guard let files = try? fileManager.contentsOfDirectory(
             at: SupabaseConfig.cacheDirectory,
@@ -380,7 +333,6 @@ final class SupabaseStorageClient {
         }
     }
 
-    /// Tamanho total formatado para exibição em UI (ex: "12.3 MB").
     func formattedCacheSize() -> String {
         let bytes = cacheSize()
         let mb = Double(bytes) / 1_048_576
@@ -388,9 +340,7 @@ final class SupabaseStorageClient {
         return String(format: "%.1f MB", mb)
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
     // MARK: - Signed URL
-    // ─────────────────────────────────────────────────────────────────────────
 
     func createSignedURL(bucket: String, path: String) async throws -> URL {
 
@@ -413,12 +363,8 @@ final class SupabaseStorageClient {
         return signedURL
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
     // MARK: - Helpers Privados
-    // ─────────────────────────────────────────────────────────────────────────
 
-    /// Gera uma chave de cache segura para o sistema de arquivos.
-    /// Substitui `/` por `_` para evitar criar subdiretórios acidentalmente.
     private func makeCacheKey(bucket: String, userFolder: String, fileName: String) -> String {
         "\(bucket)_\(userFolder)_\(fileName)"
             .replacingOccurrences(of: "/", with: "_")
@@ -453,7 +399,10 @@ final class SupabaseStorageClient {
                 message = msg
             }
             print("[Supabase] ❌ HTTP \(response.statusCode): \(message)")
-            throw SupabaseStorageError.httpError(statusCode: response.statusCode, message: message)
+            throw SupabaseStorageError.httpError(
+                statusCode: response.statusCode,
+                message: message
+            )
         }
     }
 

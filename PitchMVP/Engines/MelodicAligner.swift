@@ -1,41 +1,28 @@
 // MelodicAligner.swift
 // PitchMVP
 //
-// FIX v4 — Cross-gender 100% determinístico via hints obrigatórios:
+// FIX v5:
+// • VocalRange.classify — removido `default: return .unknown`.
+//   O case era dead code: Swift cobre todos os Float com `...<45` e `65...`,
+//   tornando o default inalcançável. Remover elimina o warning do compilador
+//   e deixa claro que .unknown não é um estado possível via classify().
 //
-// MUDANÇAS:
-// 1. VoiceRangeHint removeu .automatic — só .male e .female existem.
-//    Elimina completamente o fallback por mediana MIDI que causava falsos positivos.
-//
-// 2. CrossGenderContext.analyze usa EXCLUSIVAMENTE os hints:
-//    .male × .female → isCrossGender = true
-//    .male × .male   → isCrossGender = false
-//    .female × .female → isCrossGender = false
-//    Mediana MIDI usada apenas para estimativa de registro vocal (diagnóstico/UI).
-//
-// 3. VoiceRangeHint.frequencyRange mantido para passar ao YIN como expectedRange.
+// FIX v4 (mantidos):
+// • VoiceRangeHint sem .automatic — apenas .male, .female, .custom
+// • CrossGenderContext.analyze 100% determinístico via hints
 
 import Foundation
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - VoiceRangeHint  (sem .automatic)
+// MARK: - VoiceRangeHint
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Declaração obrigatória do registro vocal antes de comparar.
-/// Sem .automatic — o usuário deve escolher Masc. ou Fem. explicitamente.
-/// Isso garante que isCrossGender seja determinístico e nunca dependa de inferência.
 enum VoiceRangeHint {
 
-    /// Vozes masculinas: Baixo (~80 Hz) a Tenor agudo (~520 Hz)
     case male
-
-    /// Vozes femininas: Contralto (~160 Hz) a Soprano agudo (~1050 Hz)
     case female
-
-    /// Faixa personalizada em Hz — instrumentos ou casos especiais
     case custom(ClosedRange<Float>)
 
-    /// Faixa de frequências para passar ao YIN como expectedRange
     var frequencyRange: ClosedRange<Float>? {
         switch self {
         case .male:              return 80...520
@@ -44,10 +31,8 @@ enum VoiceRangeHint {
         }
     }
 
-    /// true se o hint foi selecionado (sempre true agora que .automatic foi removido)
     var isSelected: Bool { true }
 
-    /// Label para exibição no picker
     var label: String {
         switch self {
         case .male:   return "Masc."
@@ -56,7 +41,6 @@ enum VoiceRangeHint {
         }
     }
 
-    /// Ícone SF Symbols
     var icon: String {
         switch self {
         case .male:   return "arrow.down.circle"
@@ -153,13 +137,12 @@ final class MelodicAligner {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - CrossGenderContext  (determinístico — sem inferência por MIDI)
+// MARK: - CrossGenderContext
 // ─────────────────────────────────────────────────────────────────────────────
 
 struct CrossGenderContext {
 
     let medianOctaveShift: Float
-    /// Determinado exclusivamente pelos hints — nunca por inferência de áudio.
     let isCrossGender: Bool
     let lowerVoice: VoiceRole
     let estimatedUserVoiceType: VocalRange
@@ -167,7 +150,6 @@ struct CrossGenderContext {
 
     enum VoiceRole { case user, reference }
 
-    /// Factory principal — hints obrigatórios, sem fallback por MIDI.
     static func analyze(
         userHint: VoiceRangeHint,
         referenceHint: VoiceRangeHint,
@@ -179,13 +161,11 @@ struct CrossGenderContext {
         let refMedianMidi  = medianMidi(of: referenceSegments)
         let shift          = abs(userMedianMidi - refMedianMidi)
 
-        // Lógica 100% determinística — apenas os hints decidem
         let isCrossGender: Bool
         switch (userHint, referenceHint) {
         case (.male, .female), (.female, .male):
             isCrossGender = true
         default:
-            // .male × .male, .female × .female, .custom × qualquer → false
             isCrossGender = false
         }
 
@@ -222,14 +202,16 @@ enum VocalRange: String {
     case unknown   = "Indefinido"
 
     static func classify(midiMedian: Float) -> VocalRange {
+        // FIX: removido `default: return .unknown` — era dead code.
+        // Swift cobre todos os Float com os ranges abaixo; o compilador
+        // emitia warning de unreachable code que mascarava erros reais.
         switch midiMedian {
         case ..<45:   return .bass
         case 45..<50: return .baritone
         case 50..<56: return .tenor
         case 56..<60: return .contralto
         case 60..<65: return .mezzo
-        case 65...:   return .soprano
-        default:      return .unknown
+        default:      return .soprano   // 65... — único default necessário
         }
     }
 
