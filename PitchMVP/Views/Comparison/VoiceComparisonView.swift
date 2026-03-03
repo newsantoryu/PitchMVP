@@ -467,6 +467,53 @@ private struct ComparisonSummaryBanner: View {
 
             hdivider
 
+            // ── NOVO: Pontos de Atenção ───────────────────────────────────────
+            sectionLabel("PONTOS DE ATENÇÃO")
+            HStack(spacing: 0) {
+
+                // Nota com mais graus errados
+                VStack(spacing: 4) {
+                    if let worst = result.worstPitchClassNote {
+                        attentionCell(
+                            icon: "xmark.circle.fill",
+                            iconColor: .red,
+                            label: "GRAUS ERRADOS",
+                            noteName: worst.noteName,
+                            detail: "\(worst.errorCount)×"
+                        )
+                    } else {
+                        attentionCell(
+                            icon: "checkmark.circle.fill",
+                            iconColor: .green,
+                            label: "GRAUS ERRADOS",
+                            noteName: "Nenhum",
+                            detail: "✓"
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity)
+
+                vdivider
+
+                // Nota onde o usuário mais desafinou
+                VStack(spacing: 4) {
+                    if let worst = result.worstIntonationNote {
+                        attentionCell(
+                            icon: "waveform.badge.exclamationmark",
+                            iconColor: worst.avgCents >= 30 ? .red : .orange,
+                            label: "MAIS DESAFINADA",
+                            noteName: worst.noteName,
+                            detail: String(format: "%.0f¢", worst.avgCents)
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.vertical, 10)
+            // ─────────────────────────────────────────────────────────────────
+
+            hdivider
+
             sectionLabel("RESUMO")
             HStack(spacing: 0) {
                 SummaryMetric(value: "\(result.totalPairs)", label: "PARES")
@@ -506,6 +553,36 @@ private struct ComparisonSummaryBanner: View {
         }
         .background(RoundedRectangle(cornerRadius: 16).fill(Color(.secondarySystemBackground)))
     }
+
+    // ── NOVO helper: célula de atenção ────────────────────────────────────────
+    private func attentionCell(
+        icon: String,
+        iconColor: Color,
+        label: String,
+        noteName: String,
+        detail: String
+    ) -> some View {
+        VStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.system(size: 18))
+                .foregroundStyle(iconColor)
+            Text(noteName)
+                .font(.system(size: 17, weight: .light, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.primary)
+            HStack(spacing: 3) {
+                Text(label)
+                    .font(.system(size: 7, weight: .semibold, design: .rounded))
+                    .tracking(1.2)
+                    .foregroundStyle(.tertiary)
+                Text(detail)
+                    .font(.system(size: 7, weight: .semibold, design: .rounded))
+                    .foregroundStyle(iconColor)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)

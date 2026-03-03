@@ -28,6 +28,17 @@
 //
 // overallGrade: novo computed que mapeia o score numérico para uma avaliação textual.
 
+// NoteComparison.swift
+// PitchMVP
+//
+// FIX v3 — ComparisonResult: duas novas computed properties de diagnóstico por nota:
+//
+// • worstPitchClassNote: nota da referência com maior contagem de graus errados.
+// • worstIntonationNote: nota da referência onde o usuário teve maior desvio médio de afinação.
+//
+// FIX v2 — overallScore reformulado (mantido):
+//   overallScore = (intonationScore × 0.40) + (pitchClassScore × 0.35) + (contourScore × 0.25)
+
 import Foundation
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -44,8 +55,6 @@ struct NoteComparison: Identifiable {
     var userContourDirection:      ContourDirection = .unset
     var referenceContourDirection: ContourDirection = .unset
 
-    // ── Afinação Individual ──────────────────────────────────────────────────
-
     var centsDelta: Float? {
         guard let u = userSegment, let r = referenceSegment else { return nil }
         return u.averageCentsDeviation - r.averageCentsDeviation
@@ -58,8 +67,6 @@ struct NoteComparison: Identifiable {
         guard let u = userSegment, let r = referenceSegment else { return nil }
         return u.stabilityPercentage - r.stabilityPercentage
     }
-
-    // ── Grau Melódico ────────────────────────────────────────────────────────
 
     var referencePitchClass: String? {
         referenceSegment.map { MusicTheory.pitchClass(from: $0.noteName) }
@@ -74,16 +81,12 @@ struct NoteComparison: Identifiable {
         return u == r
     }
 
-    // ── Contorno Melódico ────────────────────────────────────────────────────
-
     var melodicContourMatch: Bool? {
         guard userContourDirection      != .unset,
               referenceContourDirection != .unset else { return nil }
         if userContourDirection == .same || referenceContourDirection == .same { return true }
         return userContourDirection == referenceContourDirection
     }
-
-    // ── Tempo ────────────────────────────────────────────────────────────────
 
     var startTimeFormatted: String {
         let t = userSegment?.startTime ?? referenceSegment?.startTime ?? 0
@@ -99,8 +102,6 @@ struct NoteComparison: Identifiable {
     var noteName: String {
         referenceSegment?.noteName ?? userSegment?.noteName ?? "?"
     }
-
-    // ── Grade por nota (inalterado) ───────────────────────────────────────────
 
     var grade: ComparisonGrade {
         guard let stab = stabilityDelta, let cents = centsDelta else { return .incomplete }
@@ -149,7 +150,7 @@ enum ComparisonGrade {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - ComparisonResult (overallScore reformulado)
+// MARK: - ComparisonResult
 // ─────────────────────────────────────────────────────────────────────────────
 
 struct ComparisonResult {
@@ -160,13 +161,9 @@ struct ComparisonResult {
     let userFileName: String
     let referenceFileName: String
 
-    // ── Pares válidos ─────────────────────────────────────────────────────────
-
     var totalPairs: Int {
         comparisons.filter { $0.userSegment != nil && $0.referenceSegment != nil }.count
     }
-
-    // ── Afinação (inalterado) ─────────────────────────────────────────────────
 
     var userAverageIntonation: Float {
         let valid = comparisons.compactMap(\.userIntonation)
@@ -192,8 +189,6 @@ struct ComparisonResult {
         return valid.reduce(0, +) / Float(valid.count)
     }
 
-    // ── Grau e Contorno (inalterado) ──────────────────────────────────────────
-
     var pitchClassMatchScore: Float {
         let valid = comparisons.filter { $0.userSegment != nil && $0.referenceSegment != nil }
         guard !valid.isEmpty else { return 0 }
@@ -206,15 +201,11 @@ struct ComparisonResult {
         return Float(valid.filter { $0 }.count) / Float(valid.count) * 100
     }
 
-    // ── Grade breakdown (inalterado) ──────────────────────────────────────────
-
     var excellentCount:  Int { comparisons.filter { $0.grade == .excellent  }.count }
     var goodCount:       Int { comparisons.filter { $0.grade == .good       }.count }
     var fairCount:       Int { comparisons.filter { $0.grade == .fair       }.count }
     var needsWorkCount:  Int { comparisons.filter { $0.grade == .needsWork  }.count }
     var incompleteCount: Int { comparisons.filter { $0.grade == .incomplete }.count }
-
-    // ── Faixas de desvio (inalterado) ─────────────────────────────────────────
 
     var inTuneCount: Int {
         comparisons.compactMap(\.userIntonation).filter { $0 < 10 }.count
@@ -240,33 +231,59 @@ struct ComparisonResult {
         comparisons.compactMap(\.centsDelta).filter { $0 == 0 }.count
     }
 
-    // ── overallScore REFORMULADO ──────────────────────────────────────────────
+    // ── NOVO: Nota com mais graus errados ─────────────────────────────────────
     //
-    // Fórmula:
-    //   overallScore = (intonationScore × 0.40) + (pitchClassScore × 0.35) + (contourScore × 0.25)
+    // Agrupa pares válidos pelo nome da nota da referência e conta
+    // pitchClassMatch == false. Retorna nil se não houver nenhum erro.
+
+    var worstPitchClassNote: (noteName: String, errorCount: Int)? {
+        let valid = comparisons.filter { $0.userSegment != nil && $0.referenceSegment != nil }
+        guard !valid.isEmpty else { return nil }
+
+        var errorsByNote: [String: Int] = [:]
+        for c in valid where !c.pitchClassMatch {
+            let key = c.referenceSegment?.noteName ?? "?"
+            errorsByNote[key, default: 0] += 1
+        }
+
+        guard !errorsByNote.isEmpty else { return nil }
+        let worst = errorsByNote.max(by: { $0.value < $1.value })!
+        return (noteName: worst.key, errorCount: worst.value)
+    }
+
+    // ── NOVO: Nota com maior desvio médio de afinação do usuário ─────────────
     //
-    // intonationScore: mapeia desvio médio (0–50¢) para 0–100 pts.
-    //   0¢  desvio = 100 pts
-    //   50¢ desvio =   0 pts (acima de 50¢ = cronicamente desafinado)
-    //   Fórmula: max(0, 100 - (avgIntonation / 50) * 100)
-    //
-    // pitchClassScore: % de notas com grau correto (0–100, direto).
-    //
-    // contourScore: % de movimentos melódicos corretos (0–100, direto).
-    //   Se não há dados de contorno (música muito curta), peso redistribuído
-    //   para intonação e grau proporcionalmente.
+    // Agrupa pares válidos pelo nome da nota da referência e calcula a média de
+    // averageCentsDeviation do usuário. Funciona corretamente em cross-gender
+    // pois usa o desvio individual do usuário em relação à sua própria nota alvo.
+
+    var worstIntonationNote: (noteName: String, avgCents: Float)? {
+        let valid = comparisons.filter { $0.userSegment != nil && $0.referenceSegment != nil }
+        guard !valid.isEmpty else { return nil }
+
+        var deviationsByNote: [String: [Float]] = [:]
+        for c in valid {
+            guard let userSeg = c.userSegment, let refSeg = c.referenceSegment else { continue }
+            deviationsByNote[refSeg.noteName, default: []].append(userSeg.averageCentsDeviation)
+        }
+
+        guard !deviationsByNote.isEmpty else { return nil }
+
+        let averages = deviationsByNote.mapValues { vals -> Float in
+            vals.reduce(0, +) / Float(vals.count)
+        }
+
+        let worst = averages.max(by: { $0.value < $1.value })!
+        return (noteName: worst.key, avgCents: worst.value)
+    }
+
+    // ── overallScore (inalterado) ─────────────────────────────────────────────
 
     var overallScore: Int {
         guard totalPairs > 0 else { return 0 }
 
-        // Componente 1: Afinação (40%)
         let intonationScore = max(0, 100 - (userAverageIntonation / 50) * 100)
-
-        // Componente 2: Grau correto (35%)
         let pitchScore = pitchClassMatchScore
-
-        // Componente 3: Contorno melódico (25%)
-        // Se não há dados de contorno, redistribui peso proporcionalmente
         let contourSamples = comparisons.compactMap(\.melodicContourMatch).count
         let hasContourData = contourSamples >= 2
 
@@ -274,15 +291,11 @@ struct ComparisonResult {
         if hasContourData {
             score = (intonationScore * 0.40) + (pitchScore * 0.35) + (melodicContourScore * 0.25)
         } else {
-            // Sem contorno: redistribui 25% proporcionalmente entre afinação e grau
-            // intonação fica com 40 + 25*(40/75) ≈ 53.3%, grau com 46.7%
             score = (intonationScore * 0.533) + (pitchScore * 0.467)
         }
 
         return Int(score.rounded())
     }
-
-    // ── overallGrade — novo: avaliação textual do score ───────────────────────
 
     var overallGrade: OverallGrade {
         switch overallScore {
@@ -296,15 +309,15 @@ struct ComparisonResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - OverallGrade — novo tipo para avaliação global
+// MARK: - OverallGrade (inalterado)
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum OverallGrade {
-    case outstanding    // 90–100: excelente em todas as dimensões
-    case proficient     // 75–89:  sólido, pequenos ajustes necessários
-    case developing     // 60–74:  em desenvolvimento, áreas claras de melhora
-    case beginner       // 40–59:  iniciante, requer prática focada
-    case needsAttention // 0–39:   dificuldades fundamentais
+    case outstanding
+    case proficient
+    case developing
+    case beginner
+    case needsAttention
 
     var label: String {
         switch self {
@@ -336,7 +349,6 @@ enum OverallGrade {
         }
     }
 
-    /// Mensagem pedagógica para exibir ao aluno/professor
     var feedbackMessage: String {
         switch self {
         case .outstanding:
