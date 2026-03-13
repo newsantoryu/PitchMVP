@@ -1,82 +1,49 @@
-//
-//  WhisperTranscriber.swift
-//  PitchMVP
-//
-//  Created by victor on 13/03/26.
-//
-
 // WhisperTranscriber.swift
 // PitchMVP
 //
-// Actor responsável exclusivamente por:
-//   1. Carregar e cachear o modelo WhisperKit em memória
-//   2. Executar a transcrição emitindo progresso real via AsyncStream
+// FIX: transcribe() trava no último segmento no simulador.
 //
-// Correções críticas em relação à versão anterior:
+// CAUSA RAIZ: WhisperKit no simulador (cpuOnly) às vezes entra em loop
+// no último chunk de áudio — o método nunca retorna.
 //
-// PROBLEMA 1 — sampleLength: 224 (era o principal causador de travamento em 95%)
-//   • sampleLength controla quantos tokens o decoder gera por chunk de 30s.
-//   • Com 224, músicas longas excediam o limite → Whisper entrava em loop
-//     tentando completar → progredia até 95% e parava.
-//   • Correção: sampleLength = 448 (máximo recomendado para small.en).
-//
-// PROBLEMA 2 — progresso estimado incorreto
-//   • O cálculo anterior (segmentCount * 0.05) capeia em 0.95 e não reflete
-//     o progresso real. Com arquivos de 3–5min (6–10 segmentos), o progresso
-//     pula muito rápido para 95% e fica parado.
-//   • Correção: TranscriptPostProcessor.estimatedSegmentCount() calcula o
-//     total esperado baseado na duração do áudio → progresso proporcional real.
-//
-// PROBLEMA 3 — Neural Engine indisponível no simulador
-//   • .cpuAndNeuralEngine trava o simulador (sem ANE).
-//   • Correção: detecta simulador em compile-time e usa .cpuOnly no sim,
-//     .cpuAndNeuralEngine em device físico.
+// SOLUÇÃO: withTimeout() — se transcribe() não retornar em (duração * 1.5 + 30)s,
+// cancela a task e retorna [] → LyricsAnalyzer usa fallback proporcional.
+// No device físico o timeout é generoso (duração * 2 + 60s) para não cortar
+// músicas longas em hardware lento.
 
 import Foundation
 import WhisperKit
 import AVFoundation
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MARK: - WhisperTranscriber
-// ─────────────────────────────────────────────────────────────────────────────
-
 actor WhisperTranscriber {
-
-    // MARK: - Singleton
 
     static let shared = WhisperTranscriber()
 
-    // MARK: - Configuração
-
-    /// small.en: melhor custo-benefício para inglês vocal.
-    /// Sem overhead multilingual, mais preciso que tiny/base em músicas.
+    #if targetEnvironment(simulator)
+    private let modelVariant = "openai_whisper-tiny.en"
+    #else
     private let modelVariant = "openai_whisper-small.en"
+    #endif
 
-    /// sampleLength = 448 — máximo para small.en.
-    /// FIX: era 224 → causava loop/travamento em músicas longas.
     private var decodingOptions: DecodingOptions {
         var opts = DecodingOptions()
-        opts.task                   = .transcribe
-        opts.language               = "en"
-        opts.temperature            = 0.0
-        opts.temperatureFallbackCount = 2      // menos fallbacks = mais rápido
-        opts.sampleLength           = 448      // FIX: era 224, travava em 95%
-        opts.usePrefillPrompt       = true
-        opts.usePrefillCache        = true
-        opts.suppressBlank          = true
-        opts.withoutTimestamps      = false
-        opts.wordTimestamps         = true     // necessário para TimedWord
-        opts.clipTimestamps         = []
+        opts.task                     = .transcribe
+        opts.language                 = "en"
+        opts.temperature              = 0.0
+        opts.temperatureFallbackCount = 2
+        opts.sampleLength             = 448
+        opts.usePrefillPrompt         = true
+        opts.usePrefillCache          = true
+        opts.suppressBlank            = true
+        opts.withoutTimestamps        = false
+        opts.wordTimestamps           = true
+        opts.clipTimestamps           = []
         return opts
     }
-
-    // MARK: - Estado
 
     private var kit: WhisperKit?
     private var isLoaded = false
     private let postProcessor = TranscriptPostProcessor()
-
-    // MARK: - Init
 
     private init() {}
 
@@ -84,53 +51,75 @@ actor WhisperTranscriber {
     // MARK: - API Pública
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// Transcreve um arquivo de áudio emitindo progresso real via AsyncStream.
-    ///
-    /// - Parameter audioURL: URL local do arquivo (já baixado do Supabase)
-    /// - Returns: AsyncStream<TranscriptionProgress>
     func transcribe(audioURL: URL) -> AsyncStream<TranscriptionProgress> {
         AsyncStream { continuation in
             Task {
                 do {
-                    // 1. Modelo
+                    print("[Whisper] Iniciando — \(audioURL.lastPathComponent)")
+
                     continuation.yield(.loadingModel)
                     let whisper = try await self.loadModel()
+                    print("[Whisper] Modelo '\(self.modelVariant)' carregado")
 
-                    // 2. Estima total de segmentos para progresso proporcional
-                    let duration         = audioDuration(url: audioURL)
-                    let estimatedTotal   = postProcessor.estimatedSegmentCount(
+                    let duration       = self.audioDuration(url: audioURL)
+                    let estimatedTotal = self.postProcessor.estimatedSegmentCount(
                         audioDurationSeconds: duration
                     )
-                    var segmentsDone = 0
-
+                    print("[Whisper] Duração: \(Int(duration))s — ~\(estimatedTotal) segmentos")
                     continuation.yield(.transcribing(segment: 0, estimatedTotal: estimatedTotal))
 
-                    // 3. Transcreve com callback por segmento
-                    let options = self.decodingOptions
-                    let results = try await whisper.transcribe(
-                        audioPath: audioURL.path,
-                        decodeOptions: options
-                    ) { _ -> Bool? in
-                        segmentsDone += 1
-                        continuation.yield(
-                            .transcribing(segment: segmentsDone, estimatedTotal: estimatedTotal)
-                        )
-                        return true   // continua processando
+                    // Timeout: 1.5x a duração do áudio + 30s de folga
+                    // No simulador é mais generoso porque cpuOnly é lento
+                    #if targetEnvironment(simulator)
+                    let timeoutSeconds = duration * 2.0 + 60.0
+                    #else
+                    let timeoutSeconds = duration * 1.5 + 30.0
+                    #endif
+                    print("[Whisper] Timeout configurado: \(Int(timeoutSeconds))s")
+
+                    // Progresso simulado
+                    let progressTask = Task {
+                        var tick = 0
+                        while !Task.isCancelled {
+                            try? await Task.sleep(nanoseconds: 3_000_000_000)
+                            guard !Task.isCancelled else { break }
+                            tick += 1
+                            let simDone = min(tick, max(1, estimatedTotal - 1))
+                            continuation.yield(
+                                .transcribing(segment: simDone, estimatedTotal: estimatedTotal)
+                            )
+                        }
                     }
 
-                    // 4. Extrai TimedWords
-                    let timedWords = postProcessor.extractTimedWords(from: results)
+                    // Transcreve com timeout
+                    let options = self.decodingOptions
+                    print("[Whisper] Transcrevendo (timeout: \(Int(timeoutSeconds))s)...")
 
-                    guard !timedWords.isEmpty else {
-                        continuation.yield(.failed(TranscriptionError.emptyTranscript))
-                        continuation.finish()
-                        return
+                    let results = try await withTimeout(seconds: timeoutSeconds) {
+                        try await whisper.transcribe(
+                            audioPath: audioURL.path,
+                            decodeOptions: options
+                        )
+                    }
+
+                    progressTask.cancel()
+
+                    let segCount = results?.flatMap { $0.segments }.count ?? 0
+                    print("[Whisper] Concluído — \(segCount) segmento(s)")
+
+                    let timedWords = self.postProcessor.extractTimedWords(from: results ?? [])
+                    print("[Whisper] \(timedWords.count) palavras extraídas")
+
+                    // Aceita resultado mesmo que vazio — LyricsAnalyzer usa fallback
+                    if timedWords.isEmpty {
+                        print("[Whisper] Nenhuma palavra extraída — usando fallback proporcional")
                     }
 
                     continuation.yield(.done(words: timedWords))
                     continuation.finish()
 
                 } catch {
+                    print("[Whisper] ERRO: \(error.localizedDescription)")
                     continuation.yield(.failed(error))
                     continuation.finish()
                 }
@@ -138,12 +127,10 @@ actor WhisperTranscriber {
         }
     }
 
-    // MARK: - Utilitários Públicos
+    // MARK: - Utilitários
 
-    /// true se o modelo já está em memória (sem download ou load necessário).
     var isModelReady: Bool { isLoaded && kit != nil }
 
-    /// Verifica se o modelo está cacheado em disco — sem rede.
     static func isModelCached() -> Bool {
         let base = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -151,21 +138,21 @@ actor WhisperTranscriber {
         return FileManager.default.fileExists(atPath: base.path)
     }
 
-    /// Libera o modelo da memória RAM (útil em background prolongado).
     func unload() {
         kit      = nil
         isLoaded = false
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Carregamento do Modelo
+    // MARK: - Carregamento
     // ─────────────────────────────────────────────────────────────────────────
 
     private func loadModel() async throws -> WhisperKit {
-        if let existing = kit, isLoaded { return existing }
+        if let existing = kit, isLoaded {
+            print("[Whisper] Reutilizando modelo em memória")
+            return existing
+        }
 
-        // FIX: simulador não tem Neural Engine — .cpuAndNeuralEngine trava o sim.
-        // Em device físico usa ANE para máxima velocidade.
         #if targetEnvironment(simulator)
         let compute = ModelComputeOptions(
             audioEncoderCompute: .cpuOnly,
@@ -183,7 +170,7 @@ actor WhisperTranscriber {
             computeOptions: compute,
             verbose:        false,
             logLevel:       .error,
-            prewarm:        true,
+            prewarm:        false,
             load:           true,
             download:       true
         )
@@ -195,15 +182,45 @@ actor WhisperTranscriber {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // MARK: - Helper: duração do áudio
+    // MARK: - withTimeout
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// Lê a duração do arquivo de áudio sem carregar samples em memória.
-    /// Usado para calcular o total de segmentos esperados.
+    /// Executa `operation` com timeout. Retorna nil se exceder o tempo.
+    /// Não lança erro no timeout — retorna nil para que o caller use fallback.
+    private func withTimeout<T: Sendable>(
+        seconds: Double,
+        operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T? {
+        let nanoseconds = UInt64(seconds * 1_000_000_000)
+
+        return try await withThrowingTaskGroup(of: T?.self) { group in
+            // Task principal
+            group.addTask {
+                try await operation()
+            }
+
+            // Task de timeout
+            group.addTask {
+                try await Task.sleep(nanoseconds: nanoseconds)
+                print("[Whisper] ⚠️ Timeout atingido (\(Int(seconds))s) — encerrando transcrição")
+                return nil
+            }
+
+            // Pega o primeiro que terminar (resultado real ou nil do timeout)
+            let result = try await group.next()
+            group.cancelAll()
+            return result ?? nil
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: - Helper
+    // ─────────────────────────────────────────────────────────────────────────
+
     private func audioDuration(url: URL) -> Double {
         let asset = AVURLAsset(url: url)
-        let duration = asset.duration
-        guard duration.isNumeric else { return 180 }  // fallback 3min
-        return CMTimeGetSeconds(duration)
+        let d = asset.duration
+        guard d.isNumeric else { return 180 }
+        return CMTimeGetSeconds(d)
     }
 }

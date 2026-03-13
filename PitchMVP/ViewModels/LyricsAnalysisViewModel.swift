@@ -142,14 +142,33 @@ final class LyricsAnalysisViewModel: ObservableObject {
                 try Task.checkCancellation()
 
                 // ── 5. Alinhamento ────────────────────────────────────────────
+                // Se timedWords vazio (timeout Whisper) → fallback proporcional
                 self.setProgress("Alinhando letra e notas...", 0.92)
                 let analyzer = self.lyricsAnalyzer
-                guard let result = analyzer.analyze(
-                    timedWords: timedWords,
-                    segments: segments,
-                    audioFileName: file.displayName
-                ) else {
-                    self.state = .error("Não foi possível alinhar a letra com o áudio.")
+                let result: LyricsAnalysis?
+                if !timedWords.isEmpty {
+                    print("[Lyrics] Alinhando por timestamp (\(timedWords.count) palavras)")
+                    result = analyzer.analyze(
+                        timedWords: timedWords,
+                        segments: segments,
+                        audioFileName: file.displayName
+                    )
+                } else {
+                    print("[Lyrics] Whisper timeout — fallback: só perfil vocal, sem letra")
+                    // Sem transcrição: gera análise só com perfil vocal
+                    // Os LyricWords ficam com texto "·" para indicar nota sem letra
+                    let placeholderText = segments
+                        .prefix(80)
+                        .map { _ in "·" }
+                        .joined(separator: " ")
+                    result = analyzer.analyze(
+                        plainText: placeholderText,
+                        segments: segments,
+                        audioFileName: file.displayName
+                    )
+                }
+                guard let result else {
+                    self.state = .error("Não foi possível gerar a análise.")
                     return
                 }
 

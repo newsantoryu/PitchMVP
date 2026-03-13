@@ -622,6 +622,16 @@ private struct DifficultyBadgeRow: View {
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - LyricLineCard
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// Layout cifra:
+//
+//   [nota]   [nota]      [nota]
+//   palavra1 palavra2    palavra3
+//
+// Cada palavra é uma coluna independente (VStack nota+palavra).
+// A nota aparece somente na primeira palavra do grupo (isPhraseBoundary).
+// Palavras consecutivas com a mesma nota ficam sem nota acima.
+// Fonte monospaced garante alinhamento consistente.
 
 private struct LyricLineCard: View {
     let line: LyricLine
@@ -629,15 +639,12 @@ private struct LyricLineCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            NoteAboveLineView(words: line.words)
-                .padding(.horizontal, 14).padding(.top, 12)
-
-            lyricTextLine
-                .padding(.horizontal, 14).padding(.top, 2)
-
-            emojiLine
-                .padding(.horizontal, 14).padding(.top, 1).padding(.bottom, 12)
+            CifraLineView(words: line.words)
+                .padding(.horizontal, 14)
+                .padding(.top, 12)
+                .padding(.bottom, 10)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(isActive ? Color.purple.opacity(0.08) : Color(.secondarySystemBackground))
@@ -646,44 +653,118 @@ private struct LyricLineCard: View {
         )
         .animation(.easeOut(duration: 0.25), value: isActive)
     }
+}
 
-    private var lyricTextLine: some View {
-        line.words.reduce(Text("")) { acc, word in
-            acc + Text(word.text + " ")
-                .font(.system(size: 13, design: .rounded))
-                .foregroundColor(.primary)
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: - CifraLineView
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Renderiza uma linha no formato cifra:
+//   • Linha superior: notas (só onde isPhraseBoundary == true)
+//   • Linha inferior: palavras da letra
+//
+// Usa FlowLayout horizontal com quebra automática de linha quando
+// o conteúdo excede a largura disponível.
+
+private struct CifraLineView: View {
+    let words: [LyricWord]
+
+    // Fontes fixas para garantir métricas previsíveis
+    private let noteFont  = Font.system(size: 10, weight: .semibold, design: .monospaced)
+    private let wordFont  = Font.system(size: 14, weight: .regular,  design: .rounded)
+
+    var body: some View {
+        // Wrap em linhas baseado na largura disponível
+        GeometryReader { geo in
+            self.buildLines(maxWidth: geo.size.width)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // Altura estimada: cada linha ocupa ~42pt (nota 13pt + word 18pt + gap)
+        .frame(minHeight: CGFloat(estimatedLineCount()) * 42)
     }
 
-    private var emojiLine: some View {
-        line.words.reduce(Text("")) { acc, word in
-            acc + Text(word.difficulty.emoji + " ").font(.system(size: 10))
+    // Agrupa palavras em linhas que cabem na largura disponível
+    private func buildLines(maxWidth: CGFloat) -> some View {
+        let lines = wrapWords(maxWidth: maxWidth)
+        return VStack(alignment: .leading, spacing: 14) {
+            ForEach(Array(lines.enumerated()), id: \.offset) { _, lineWords in
+                HStack(alignment: .bottom, spacing: 6) {
+                    ForEach(lineWords) { word in
+                        WordColumn(
+                            word: word,
+                            noteFont: noteFont,
+                            wordFont: wordFont
+                        )
+                    }
+                }
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // Quebra as palavras em grupos que cabem em maxWidth
+    private func wrapWords(maxWidth: CGFloat) -> [[LyricWord]] {
+        guard !words.isEmpty else { return [] }
+        var lines:   [[LyricWord]] = []
+        var current: [LyricWord]   = []
+        var lineWidth: CGFloat     = 0
+        let spacing: CGFloat       = 6
+
+        for word in words {
+            let w = estimatedWidth(of: word.text)
+            if lineWidth + w + spacing > maxWidth && !current.isEmpty {
+                lines.append(current)
+                current   = [word]
+                lineWidth = w
+            } else {
+                current.append(word)
+                lineWidth += w + spacing
+            }
+        }
+        if !current.isEmpty { lines.append(current) }
+        return lines
+    }
+
+    // Estima largura de uma palavra (caractere médio ≈ 8.5pt em size 14 rounded)
+    private func estimatedWidth(of text: String) -> CGFloat {
+        CGFloat(text.count) * 8.5
+    }
+
+    private func estimatedLineCount() -> Int {
+        max(1, Int(ceil(Double(words.count) / 7.0)))
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MARK: - NoteAboveLineView
+// MARK: - WordColumn
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// Coluna individual: nota (opcional) acima da palavra.
+//
+//   A3          ← nota colorida, só aparece se isPhraseBoundary
+//   tired       ← palavra da letra
 
-private struct NoteAboveLineView: View {
-    let words: [LyricWord]
+private struct WordColumn: View {
+    let word:     LyricWord
+    let noteFont: Font
+    let wordFont: Font
 
     var body: some View {
-        words.reduce(Text("")) { acc, word in
-            guard word.isPhraseBoundary, let note = word.noteName else {
-                let spaces = String(repeating: " ", count: word.text.count + 1)
-                return acc + Text(spaces).font(.system(size: 9, design: .monospaced))
+        VStack(alignment: .leading, spacing: 1) {
+            // Linha da nota — sempre ocupa espaço para manter alinhamento vertical
+            if word.isPhraseBoundary, let note = word.noteName {
+                Text(note)
+                    .font(noteFont)
+                    .foregroundStyle(word.difficulty.color)
+            } else {
+                // Espaço reservado mesmo sem nota (mantém palavras alinhadas)
+                Text(" ")
+                    .font(noteFont)
             }
-            let pad    = max(0, word.text.count - note.count)
-            let padded = note + String(repeating: " ", count: pad + 1)
-            return acc + Text(padded)
-                .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                .foregroundColor(word.difficulty.color)
+
+            // Palavra da letra
+            Text(word.text)
+                .font(wordFont)
+                .foregroundStyle(Color.primary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
