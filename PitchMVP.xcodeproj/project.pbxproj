@@ -8,6 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		57039DD22F4CF5EE00AFC1E1 /* PitchLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */; };
+		571114182F63872300AEC8AC /* LyricsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571114172F63871200AEC8AC /* LyricsModels.swift */; };
+		5711141A2F6387C700AEC8AC /* VocalProfileAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571114192F6387B700AEC8AC /* VocalProfileAnalyzer.swift */; };
+		5711141C2F63881800AEC8AC /* LyricsAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5711141B2F63880A00AEC8AC /* LyricsAnalyzer.swift */; };
+		5711141E2F6388BD00AEC8AC /* LyricsPDFExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5711141D2F6388AC00AEC8AC /* LyricsPDFExporter.swift */; };
+		571114202F63891600AEC8AC /* LyricsAnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5711141F2F6388FF00AEC8AC /* LyricsAnalysisViewModel.swift */; };
+		571114222F63896000AEC8AC /* LyricsAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571114212F63895300AEC8AC /* LyricsAnalysisView.swift */; };
+		571114252F63922700AEC8AC /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 571114242F63922700AEC8AC /* WhisperKit */; };
 		572FD9BF2F4E2A8C00DE544B /* NoteSegmenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9BE2F4E2A7900DE544B /* NoteSegmenter.swift */; };
 		572FD9C12F4E2AC000DE544B /* SegmentAnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C02F4E2AB000DE544B /* SegmentAnalysisViewModel.swift */; };
 		572FD9C32F4E2AE700DE544B /* PitchCurveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */; };
@@ -57,6 +64,9 @@
 		579D5C742F49F2D00094A862 /* PitchMVPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579D5C732F49F2D00094A862 /* PitchMVPTests.swift */; };
 		579D5C7E2F49F2D00094A862 /* PitchMVPUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579D5C7D2F49F2D00094A862 /* PitchMVPUITests.swift */; };
 		579D5C802F49F2D00094A862 /* PitchMVPUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579D5C7F2F49F2D00094A862 /* PitchMVPUITestsLaunchTests.swift */; };
+		57B930D92F645CE600E00CDA /* TranscriptionProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B930D82F645CD000E00CDA /* TranscriptionProgress.swift */; };
+		57B930DB2F645D5300E00CDA /* TranscriptPostProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B930DA2F645D4200E00CDA /* TranscriptPostProcessor.swift */; };
+		57B930DD2F645DC400E00CDA /* WhisperTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B930DC2F645D9D00E00CDA /* WhisperTranscriber.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,6 +88,12 @@
 
 /* Begin PBXFileReference section */
 		57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchLabView.swift; sourceTree = "<group>"; };
+		571114172F63871200AEC8AC /* LyricsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsModels.swift; sourceTree = "<group>"; };
+		571114192F6387B700AEC8AC /* VocalProfileAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocalProfileAnalyzer.swift; sourceTree = "<group>"; };
+		5711141B2F63880A00AEC8AC /* LyricsAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsAnalyzer.swift; sourceTree = "<group>"; };
+		5711141D2F6388AC00AEC8AC /* LyricsPDFExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsPDFExporter.swift; sourceTree = "<group>"; };
+		5711141F2F6388FF00AEC8AC /* LyricsAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsAnalysisViewModel.swift; sourceTree = "<group>"; };
+		571114212F63895300AEC8AC /* LyricsAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsAnalysisView.swift; sourceTree = "<group>"; };
 		572FD9BE2F4E2A7900DE544B /* NoteSegmenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSegmenter.swift; sourceTree = "<group>"; };
 		572FD9C02F4E2AB000DE544B /* SegmentAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentAnalysisViewModel.swift; sourceTree = "<group>"; };
 		572FD9C22F4E2AD000DE544B /* PitchCurveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchCurveView.swift; sourceTree = "<group>"; };
@@ -132,6 +148,9 @@
 		579D5C792F49F2D00094A862 /* PitchMVPUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PitchMVPUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		579D5C7D2F49F2D00094A862 /* PitchMVPUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchMVPUITests.swift; sourceTree = "<group>"; };
 		579D5C7F2F49F2D00094A862 /* PitchMVPUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchMVPUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		57B930D82F645CD000E00CDA /* TranscriptionProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionProgress.swift; sourceTree = "<group>"; };
+		57B930DA2F645D4200E00CDA /* TranscriptPostProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptPostProcessor.swift; sourceTree = "<group>"; };
+		57B930DC2F645D9D00E00CDA /* WhisperTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhisperTranscriber.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -139,6 +158,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				571114252F63922700AEC8AC /* WhisperKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -162,6 +182,7 @@
 		572FD9CE2F4E44B100DE544B /* API */ = {
 			isa = PBXGroup;
 			children = (
+				5711141D2F6388AC00AEC8AC /* LyricsPDFExporter.swift */,
 				572FD9D42F4E457D00DE544B /* SupabaseAudioRepository.swift */,
 				572FD9D12F4E450F00DE544B /* SupabaseStorageClient.swift */,
 				572FD9CF2F4E44C700DE544B /* SupabaseConfig.swift */,
@@ -172,6 +193,8 @@
 		5780B2362F50D9F300E935C5 /* Engines */ = {
 			isa = PBXGroup;
 			children = (
+				57B930DC2F645D9D00E00CDA /* WhisperTranscriber.swift */,
+				57B930DA2F645D4200E00CDA /* TranscriptPostProcessor.swift */,
 				5780B23B2F50DCBE00E935C5 /* MelodicAligner.swift */,
 				578A36B82F4B965900A45D9C /* SimulatedMentorEngine.swift */,
 			);
@@ -181,6 +204,8 @@
 		578312182F4A1ABB0064D5F6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				5711141B2F63880A00AEC8AC /* LyricsAnalyzer.swift */,
+				571114192F6387B700AEC8AC /* VocalProfileAnalyzer.swift */,
 				5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */,
 				5783122A2F4A321E0064D5F6 /* OfflineAudioFileService.swift */,
 				577970F02F4D07F900E879B5 /* SessionHistoryService.swift */,
@@ -202,6 +227,7 @@
 		5783121A2F4A1AD00064D5F6 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				5711141F2F6388FF00AEC8AC /* LyricsAnalysisViewModel.swift */,
 				572FD9C82F4E3D4300DE544B /* VoiceComparisonViewModel.swift */,
 				572FD9C02F4E2AB000DE544B /* SegmentAnalysisViewModel.swift */,
 				578A36B02F4B524300A45D9C /* TunerLabViewModel.swift */,
@@ -214,6 +240,7 @@
 		578312212F4A1B8F0064D5F6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				571114212F63895300AEC8AC /* LyricsAnalysisView.swift */,
 				57BC1E712F4F87720033BAF9 /* SegmentAnalysis */,
 				57BC1E702F4F87370033BAF9 /* SessionHistory */,
 				57BC1E6E2F4F86270033BAF9 /* Lab */,
@@ -242,6 +269,8 @@
 		578312462F4A6F970064D5F6 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				57B930D82F645CD000E00CDA /* TranscriptionProgress.swift */,
+				571114172F63871200AEC8AC /* LyricsModels.swift */,
 				572FD9CA2F4E3DA000DE544B /* NoteComparison.swift */,
 				578312402F4A68560064D5F6 /* PitchResult.swift */,
 				578A36B22F4B90D600A45D9C /* PitchFeedback.swift */,
@@ -460,6 +489,9 @@
 				Base,
 			);
 			mainGroup = 579D5C562F49F2C90094A862;
+			packageReferences = (
+				571114232F63922700AEC8AC /* XCRemoteSwiftPackageReference "WhisperKit" */,
+			);
 			productRefGroup = 579D5C602F49F2C90094A862 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -530,19 +562,28 @@
 				572FD9BF2F4E2A8C00DE544B /* NoteSegmenter.swift in Sources */,
 				5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */,
 				572FD9CD2F4E3E3100DE544B /* OverlappedPitchCurveView.swift in Sources */,
+				57B930DB2F645D5300E00CDA /* TranscriptPostProcessor.swift in Sources */,
+				57B930D92F645CE600E00CDA /* TranscriptionProgress.swift in Sources */,
 				5783122D2F4A32540064D5F6 /* TunerViewModel.swift in Sources */,
 				578A36B52F4B916F00A45D9C /* MentorViewModel.swift in Sources */,
 				572FD9D72F4E45FE00DE544B /* RemoteFilePickerView.swift in Sources */,
+				571114222F63896000AEC8AC /* LyricsAnalysisView.swift in Sources */,
 				572FD9D22F4E452200DE544B /* SupabaseStorageClient.swift in Sources */,
 				5780B23C2F50DCDD00E935C5 /* MelodicAligner.swift in Sources */,
 				572FD9C12F4E2AC000DE544B /* SegmentAnalysisViewModel.swift in Sources */,
+				5711141A2F6387C700AEC8AC /* VocalProfileAnalyzer.swift in Sources */,
 				578A36B12F4B524300A45D9C /* TunerLabViewModel.swift in Sources */,
+				5711141C2F63881800AEC8AC /* LyricsAnalyzer.swift in Sources */,
+				571114202F63891600AEC8AC /* LyricsAnalysisViewModel.swift in Sources */,
 				578A36BD2F4B9C9B00A45D9C /* SimulationMode.swift in Sources */,
+				57B930DD2F645DC400E00CDA /* WhisperTranscriber.swift in Sources */,
+				571114182F63872300AEC8AC /* LyricsModels.swift in Sources */,
 				578A36BF2F4B9DE300A45D9C /* MentorView.swift in Sources */,
 				579D5C632F49F2C90094A862 /* PitchMVPApp.swift in Sources */,
 				572FD9C92F4E3D6000DE544B /* VoiceComparisonViewModel.swift in Sources */,
 				5783122F2F4A326A0064D5F6 /* TunerView.swift in Sources */,
 				578A36B72F4B93D300A45D9C /* PitchMeterView.swift in Sources */,
+				5711141E2F6388BD00AEC8AC /* LyricsPDFExporter.swift in Sources */,
 				572FD9C52F4E2B0C00DE544B /* SegmentAnalysisView.swift in Sources */,
 				572FD9C32F4E2AE700DE544B /* PitchCurveView.swift in Sources */,
 				572FD9D52F4E458F00DE544B /* SupabaseAudioRepository.swift in Sources */,
@@ -884,6 +925,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		571114232F63922700AEC8AC /* XCRemoteSwiftPackageReference "WhisperKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/WhisperKit";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		571114242F63922700AEC8AC /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 571114232F63922700AEC8AC /* XCRemoteSwiftPackageReference "WhisperKit" */;
+			productName = WhisperKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 579D5C572F49F2C90094A862 /* Project object */;
 }

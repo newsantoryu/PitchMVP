@@ -8,9 +8,9 @@ struct TunerView: View {
                  VoiceComparisonView()
                 .tabItem { Label("Comparar", systemImage: "arrow.triangle.2.circlepath") }
                  .tag(0)
-            PitchLabView()
+        LyricsAnalysisView()
                 .tabItem {
-                    Label("Lab", systemImage: "waveform.path.ecg")
+                    Label("Cifra", systemImage: "music.note.list")
                 }
                 .tag(1)
 
