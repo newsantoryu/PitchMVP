@@ -27,12 +27,12 @@
 		572FD9D22F4E452200DE544B /* SupabaseStorageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9D12F4E450F00DE544B /* SupabaseStorageClient.swift */; };
 		572FD9D52F4E458F00DE544B /* SupabaseAudioRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9D42F4E457D00DE544B /* SupabaseAudioRepository.swift */; };
 		572FD9D72F4E45FE00DE544B /* RemoteFilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */; };
-		577970ED2F4D04EC00E879B5 /* YINDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EC2F4D04C900E879B5 /* YINDetector.swift */; };
 		577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */; };
 		577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F02F4D07F900E879B5 /* SessionHistoryService.swift */; };
 		577970F32F4D083100E879B5 /* SessionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F22F4D082500E879B5 /* SessionHistoryView.swift */; };
 		5780B23A2F50DC2300E935C5 /* CrossGenderBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5780B2392F50DC0B00E935C5 /* CrossGenderBanner.swift */; };
 		5780B23C2F50DCDD00E935C5 /* MelodicAligner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5780B23B2F50DCBE00E935C5 /* MelodicAligner.swift */; };
+		578136A72FAA04130070408C /* VocalCore in Frameworks */ = {isa = PBXBuildFile; productRef = 578136A62FAA04130070408C /* VocalCore */; };
 		578312172F4A0D660064D5F6 /* tone440.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578312162F4A0D660064D5F6 /* tone440.wav */; };
 		5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5783121B2F4A1AF70064D5F6 /* AudioEngineService.swift */; };
 		5783122B2F4A321E0064D5F6 /* OfflineAudioFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5783122A2F4A321E0064D5F6 /* OfflineAudioFileService.swift */; };
@@ -107,7 +107,6 @@
 		572FD9D42F4E457D00DE544B /* SupabaseAudioRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAudioRepository.swift; sourceTree = "<group>"; };
 		572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteFilePickerView.swift; sourceTree = "<group>"; };
 		572FD9D82F4E4C9500DE544B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		577970EC2F4D04C900E879B5 /* YINDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YINDetector.swift; sourceTree = "<group>"; };
 		577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VocalPitchDetector+YIN.swift"; sourceTree = "<group>"; };
 		577970F02F4D07F900E879B5 /* SessionHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryService.swift; sourceTree = "<group>"; };
 		577970F22F4D082500E879B5 /* SessionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryView.swift; sourceTree = "<group>"; };
@@ -159,6 +158,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				571114252F63922700AEC8AC /* WhisperKit in Frameworks */,
+				578136A72FAA04130070408C /* VocalCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -201,6 +201,13 @@
 			path = Engines;
 			sourceTree = "<group>";
 		};
+		578136A52FAA04130070408C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		578312182F4A1ABB0064D5F6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -218,7 +225,6 @@
 			children = (
 				572FD9BE2F4E2A7900DE544B /* NoteSegmenter.swift */,
 				577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */,
-				577970EC2F4D04C900E879B5 /* YINDetector.swift */,
 				578312472F4A70530064D5F6 /* HPS.swift */,
 			);
 			path = DSP;
@@ -287,6 +293,7 @@
 				579D5C612F49F2C90094A862 /* PitchMVP */,
 				579D5C722F49F2D00094A862 /* PitchMVPTests */,
 				579D5C7C2F49F2D00094A862 /* PitchMVPUITests */,
+				578136A52FAA04130070408C /* Frameworks */,
 				579D5C602F49F2C90094A862 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -491,6 +498,7 @@
 			mainGroup = 579D5C562F49F2C90094A862;
 			packageReferences = (
 				571114232F63922700AEC8AC /* XCRemoteSwiftPackageReference "WhisperKit" */,
+				578136A42FA9FF400070408C /* XCRemoteSwiftPackageReference "VocalCore" */,
 			);
 			productRefGroup = 579D5C602F49F2C90094A862 /* Products */;
 			projectDirPath = "";
@@ -550,7 +558,6 @@
 				5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */,
 				578312482F4A70530064D5F6 /* HPS.swift in Sources */,
 				57841A2C2F51F9700015E111 /* NoteComparisonCard.swift in Sources */,
-				577970ED2F4D04EC00E879B5 /* YINDetector.swift in Sources */,
 				577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */,
 				578A36BB2F4B9C4F00A45D9C /* TrainingNotes.swift in Sources */,
 				578312412F4A68560064D5F6 /* PitchResult.swift in Sources */,
@@ -935,6 +942,14 @@
 				kind = branch;
 			};
 		};
+		578136A42FA9FF400070408C /* XCRemoteSwiftPackageReference "VocalCore" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/newsantoryu/VocalCore.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -942,6 +957,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 571114232F63922700AEC8AC /* XCRemoteSwiftPackageReference "WhisperKit" */;
 			productName = WhisperKit;
+		};
+		578136A62FAA04130070408C /* VocalCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 578136A42FA9FF400070408C /* XCRemoteSwiftPackageReference "VocalCore" */;
+			productName = VocalCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

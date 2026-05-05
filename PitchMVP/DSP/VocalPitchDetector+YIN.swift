@@ -17,6 +17,7 @@
 
 import Accelerate
 import Foundation
+import VocalCore
 
 final class VocalPitchDetector {
 
