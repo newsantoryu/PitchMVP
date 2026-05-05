@@ -3,6 +3,7 @@
 
 import Foundation
 import SwiftUI
+import VocalCore
 
 /// ViewModel da tela de Lab — executa testes automatizados de detecção de pitch
 /// usando ondas senoidais sintéticas como entrada, sem necessidade de microfone.

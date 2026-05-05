@@ -12,6 +12,7 @@
 // • CrossGenderContext.analyze 100% determinístico via hints
 
 import Foundation
+import VocalCore
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - VoiceRangeHint

@@ -27,7 +27,6 @@
 		572FD9D22F4E452200DE544B /* SupabaseStorageClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9D12F4E450F00DE544B /* SupabaseStorageClient.swift */; };
 		572FD9D52F4E458F00DE544B /* SupabaseAudioRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9D42F4E457D00DE544B /* SupabaseAudioRepository.swift */; };
 		572FD9D72F4E45FE00DE544B /* RemoteFilePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */; };
-		577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */; };
 		577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F02F4D07F900E879B5 /* SessionHistoryService.swift */; };
 		577970F32F4D083100E879B5 /* SessionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577970F22F4D082500E879B5 /* SessionHistoryView.swift */; };
 		5780B23A2F50DC2300E935C5 /* CrossGenderBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5780B2392F50DC0B00E935C5 /* CrossGenderBanner.swift */; };
@@ -44,8 +43,6 @@
 		5783123B2F4A582A0064D5F6 /* voz2.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5783123A2F4A58290064D5F6 /* voz2.wav */; };
 		5783123D2F4A583B0064D5F6 /* voz.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5783123C2F4A583B0064D5F6 /* voz.wav */; };
 		5783123F2F4A5E360064D5F6 /* voz3.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5783123E2F4A5E360064D5F6 /* voz3.wav */; };
-		578312412F4A68560064D5F6 /* PitchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578312402F4A68560064D5F6 /* PitchResult.swift */; };
-		578312482F4A70530064D5F6 /* HPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578312472F4A70530064D5F6 /* HPS.swift */; };
 		5783124A2F4A80570064D5F6 /* voz5.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578312492F4A80570064D5F6 /* voz5.wav */; };
 		57841A2C2F51F9700015E111 /* NoteComparisonCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57841A2B2F51F9620015E111 /* NoteComparisonCard.swift */; };
 		578A36AF2F4B4DBB00A45D9C /* vozm1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 578A36AE2F4B4DBA00A45D9C /* vozm1.wav */; };
@@ -107,7 +104,6 @@
 		572FD9D42F4E457D00DE544B /* SupabaseAudioRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAudioRepository.swift; sourceTree = "<group>"; };
 		572FD9D62F4E45E300DE544B /* RemoteFilePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteFilePickerView.swift; sourceTree = "<group>"; };
 		572FD9D82F4E4C9500DE544B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VocalPitchDetector+YIN.swift"; sourceTree = "<group>"; };
 		577970F02F4D07F900E879B5 /* SessionHistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryService.swift; sourceTree = "<group>"; };
 		577970F22F4D082500E879B5 /* SessionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryView.swift; sourceTree = "<group>"; };
 		5780B2392F50DC0B00E935C5 /* CrossGenderBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossGenderBanner.swift; sourceTree = "<group>"; };
@@ -124,8 +120,6 @@
 		5783123A2F4A58290064D5F6 /* voz2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = voz2.wav; sourceTree = "<group>"; };
 		5783123C2F4A583B0064D5F6 /* voz.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = voz.wav; sourceTree = "<group>"; };
 		5783123E2F4A5E360064D5F6 /* voz3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = voz3.wav; sourceTree = "<group>"; };
-		578312402F4A68560064D5F6 /* PitchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchResult.swift; sourceTree = "<group>"; };
-		578312472F4A70530064D5F6 /* HPS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HPS.swift; sourceTree = "<group>"; };
 		578312492F4A80570064D5F6 /* voz5.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = voz5.wav; sourceTree = "<group>"; };
 		57841A2B2F51F9620015E111 /* NoteComparisonCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteComparisonCard.swift; sourceTree = "<group>"; };
 		578A36AE2F4B4DBA00A45D9C /* vozm1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = vozm1.wav; sourceTree = "<group>"; };
@@ -224,8 +218,6 @@
 			isa = PBXGroup;
 			children = (
 				572FD9BE2F4E2A7900DE544B /* NoteSegmenter.swift */,
-				577970EE2F4D052A00E879B5 /* VocalPitchDetector+YIN.swift */,
-				578312472F4A70530064D5F6 /* HPS.swift */,
 			);
 			path = DSP;
 			sourceTree = "<group>";
@@ -278,7 +270,6 @@
 				57B930D82F645CD000E00CDA /* TranscriptionProgress.swift */,
 				571114172F63871200AEC8AC /* LyricsModels.swift */,
 				572FD9CA2F4E3DA000DE544B /* NoteComparison.swift */,
-				578312402F4A68560064D5F6 /* PitchResult.swift */,
 				578A36B22F4B90D600A45D9C /* PitchFeedback.swift */,
 				578A36BA2F4B9C4F00A45D9C /* TrainingNotes.swift */,
 				578A36BC2F4B9C9B00A45D9C /* SimulationMode.swift */,
@@ -556,11 +547,8 @@
 				578A36C12F4BA12C00A45D9C /* BaseNote.swift in Sources */,
 				578A36B32F4B90D600A45D9C /* PitchFeedback.swift in Sources */,
 				5783121C2F4A1AF70064D5F6 /* AudioEngineService.swift in Sources */,
-				578312482F4A70530064D5F6 /* HPS.swift in Sources */,
 				57841A2C2F51F9700015E111 /* NoteComparisonCard.swift in Sources */,
-				577970EF2F4D056000E879B5 /* VocalPitchDetector+YIN.swift in Sources */,
 				578A36BB2F4B9C4F00A45D9C /* TrainingNotes.swift in Sources */,
-				578312412F4A68560064D5F6 /* PitchResult.swift in Sources */,
 				572FD9C72F4E3D0700DE544B /* VoiceComparisonView.swift in Sources */,
 				578A36B92F4B965900A45D9C /* SimulatedMentorEngine.swift in Sources */,
 				577970F12F4D080600E879B5 /* SessionHistoryService.swift in Sources */,

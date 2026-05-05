@@ -2,6 +2,7 @@
 // PitchMVP
 
 import Foundation
+import VocalCore
 
 /// ViewModel da tela WAV Analyzer.
 /// Gerencia a seleção de arquivos de áudio do Bundle e

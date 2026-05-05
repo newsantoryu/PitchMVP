@@ -40,6 +40,7 @@
 //   overallScore = (intonationScore × 0.40) + (pitchClassScore × 0.35) + (contourScore × 0.25)
 
 import Foundation
+import VocalCore
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - NoteComparison (inalterado)
