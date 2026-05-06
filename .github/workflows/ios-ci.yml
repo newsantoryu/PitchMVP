@@ -1,9 +1,36 @@
-name: Test CI
+name: iOS CI
 
-on: [push]
+on: [push, pull_request]
+  push:
+    branches:
+      - '**'
+  pull_request: 
 
 jobs:
-  test:
+  build-and-test:
     runs-on: macos-latest
+
     steps:
-      - run: echo "CI funcionando"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Resolve dependencies
+        run: xcodebuild -resolvePackageDependencies
+
+      - name: Build
+        run: |
+          xcodebuild build \
+          -scheme PitchMVP \
+          -destination 'platform=iOS Simulator,name=iPhone 15'
+
+      - name: Test
+        run: |
+          xcodebuild test \
+          -scheme PitchMVP \
+          -destination 'platform=iOS Simulator,name=iPhone 15'
