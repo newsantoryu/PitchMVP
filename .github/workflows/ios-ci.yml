@@ -2,7 +2,8 @@ name: iOS CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
 
 jobs:
@@ -32,4 +33,4 @@ jobs:
         run: |
           xcodebuild test \
           -scheme PitchMVP \
-          -destination 'platform=iOS Simulator,name=iPhone SE (3rd generation),OS=18.3.1'
+          -destination 'platform=iOS Simulator,name=iPhone 15'
