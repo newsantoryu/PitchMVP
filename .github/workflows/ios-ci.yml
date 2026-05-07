@@ -9,21 +9,17 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: macos-15
+    runs-on: macos-14
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode 16
-        run: sudo xcode-select -switch /Applications/Xcode_16.app
+      - name: Select Xcode 15.4
+        run: sudo xcode-select -switch /Applications/Xcode_15.4.app
 
       - name: Show Xcode version
         run: xcodebuild -version
-
-      - name: Install iOS Platform
-        run: |
-          xcodebuild -downloadPlatform iOS
 
       - name: Resolve Swift Packages
         run: xcodebuild -resolvePackageDependencies
@@ -38,14 +34,12 @@ jobs:
         run: |
           xcodebuild build \
           -scheme PitchMVP \
-          -sdk iphonesimulator \
-          -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+          -destination 'platform=iOS Simulator,name=iPhone 15' \
           CODE_SIGNING_ALLOWED=NO
 
       - name: Run Tests
         run: |
           xcodebuild test \
           -scheme PitchMVP \
-          -sdk iphonesimulator \
-          -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+          -destination 'platform=iOS Simulator,name=iPhone 15' \
           CODE_SIGNING_ALLOWED=NO
