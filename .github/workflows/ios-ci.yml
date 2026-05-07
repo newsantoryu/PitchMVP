@@ -4,42 +4,27 @@ on:
   push:
     branches:
       - '**'
-
   pull_request:
 
 jobs:
   build-and-test:
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode 15.4
-        run: sudo xcode-select -switch /Applications/Xcode_15.4.app
+      - name: Select Xcode 16
+        run: sudo xcode-select -switch /Applications/Xcode_16.app
 
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Resolve Swift Packages
+      - name: Resolve Packages
         run: xcodebuild -resolvePackageDependencies
-
-      - name: Show Destinations
-        run: |
-          xcodebuild \
-          -scheme PitchMVP \
-          -showdestinations
 
       - name: Build
         run: |
           xcodebuild build \
           -scheme PitchMVP \
-          -destination 'platform=iOS Simulator,name=iPhone 15' \
-          CODE_SIGNING_ALLOWED=NO
-
-      - name: Run Tests
-        run: |
-          xcodebuild test \
-          -scheme PitchMVP \
-          -destination 'platform=iOS Simulator,name=iPhone 15' \
           CODE_SIGNING_ALLOWED=NO

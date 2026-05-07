@@ -16,8 +16,9 @@
 //   • Manter o WhisperTranscriber focado em I/O de modelo
 
 import Foundation
+#if canImport(WhisperKit)
 import WhisperKit
-
+#endif
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - TranscriptPostProcessor
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ struct TranscriptPostProcessor {
     /// Prioridade:
     ///   1. wordTimestamps do segmento (precisão máxima — palavra por palavra)
     ///   2. Timestamp do segmento distribuído linearmente pelas palavras (fallback)
+    #if canImport(WhisperKit)
     func extractTimedWords(from results: [TranscriptionResult]) -> [TimedWord] {
         var output: [TimedWord] = []
 
@@ -43,6 +45,7 @@ struct TranscriptPostProcessor {
 
         return output
     }
+    #endif
 
     /// Estima o total de segmentos para cálculo de progresso preciso.
     /// Baseado na duração do áudio: Whisper processa em chunks de ~30s.
@@ -52,6 +55,7 @@ struct TranscriptPostProcessor {
 
     // MARK: - Extração por Segmento
 
+#if canImport(WhisperKit)
     private func extractWords(from segment: TranscriptionSegment) -> [TimedWord] {
         // Caminho 1: wordTimestamps disponíveis → precisão máxima
         if let wordTokens = segment.words, !wordTokens.isEmpty {
@@ -78,7 +82,7 @@ struct TranscriptPostProcessor {
             TimedWord(text: word, startTime: segStart + Double(i) * timePerWord)
         }
     }
-
+#endif
     // MARK: - Limpeza de Texto
 
     /// Remove artefatos que o Whisper insere em músicas:
