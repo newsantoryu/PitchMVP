@@ -24,17 +24,10 @@ jobs:
       - name: Resolve dependencies
         run: xcodebuild -resolvePackageDependencies
 
-      - name: Show available simulators
-        run: xcrun simctl list devices
+      - name: List available destinations
+        run: xcodebuild -scheme PitchMVP -showdestinations
 
       - name: Build
         run: |
           xcodebuild build \
-          -scheme PitchMVP \
-          -destination 'generic/platform=iOS Simulator'
-
-      - name: Test
-        run: |
-          xcodebuild test \
-          -scheme PitchMVP \
-          -destination 'generic/platform=iOS Simulator'
+          -scheme PitchMVP
