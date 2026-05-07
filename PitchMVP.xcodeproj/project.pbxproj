@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		57039DD22F4CF5EE00AFC1E1 /* PitchLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */; };
+		570582A12FACE24A00E3E8E1 /* AudioEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570582A02FACE24A00E3E8E1 /* AudioEngineTests.swift */; };
 		571114182F63872300AEC8AC /* LyricsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571114172F63871200AEC8AC /* LyricsModels.swift */; };
 		5711141A2F6387C700AEC8AC /* VocalProfileAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 571114192F6387B700AEC8AC /* VocalProfileAnalyzer.swift */; };
 		5711141C2F63881800AEC8AC /* LyricsAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5711141B2F63880A00AEC8AC /* LyricsAnalyzer.swift */; };
@@ -85,6 +86,7 @@
 
 /* Begin PBXFileReference section */
 		57039DD12F4CF5D700AFC1E1 /* PitchLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchLabView.swift; sourceTree = "<group>"; };
+		570582A02FACE24A00E3E8E1 /* AudioEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngineTests.swift; sourceTree = "<group>"; };
 		571114172F63871200AEC8AC /* LyricsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsModels.swift; sourceTree = "<group>"; };
 		571114192F6387B700AEC8AC /* VocalProfileAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocalProfileAnalyzer.swift; sourceTree = "<group>"; };
 		5711141B2F63880A00AEC8AC /* LyricsAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsAnalyzer.swift; sourceTree = "<group>"; };
@@ -332,6 +334,7 @@
 			isa = PBXGroup;
 			children = (
 				579D5C732F49F2D00094A862 /* PitchMVPTests.swift */,
+				570582A02FACE24A00E3E8E1 /* AudioEngineTests.swift */,
 			);
 			path = PitchMVPTests;
 			sourceTree = "<group>";
@@ -590,6 +593,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				570582A12FACE24A00E3E8E1 /* AudioEngineTests.swift in Sources */,
 				579D5C742F49F2D00094A862 /* PitchMVPTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

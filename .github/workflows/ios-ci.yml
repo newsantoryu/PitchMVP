@@ -3,13 +3,13 @@ name: iOS CI
 on:
   push:
     branches:
-      - main
-      - lirycs
+      - '**'
+
   pull_request:
 
 jobs:
   build-and-test:
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
       - name: Checkout
@@ -21,11 +21,18 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Resolve dependencies
+      - name: Resolve Swift Packages
         run: xcodebuild -resolvePackageDependencies
 
       - name: Build
         run: |
           xcodebuild build \
           -scheme PitchMVP \
+          CODE_SIGNING_ALLOWED=NO
+
+      - name: Run Swift Tests
+        run: |
+          xcodebuild test \
+          -scheme PitchMVP \
+          -destination 'platform=iOS Simulator,name=iPhone 16' \
           CODE_SIGNING_ALLOWED=NO
