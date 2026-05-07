@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/newsantoryu/VocalCore.git",
       "state" : {
-        "revision" : "730d13c01bcdf91a90494c254eb702d38047c821",
-        "version" : "1.0.5"
+        "revision" : "46fd8552dbe8bdf41615368ca45572863500e621",
+        "version" : "1.0.7"
       }
     },
     {
