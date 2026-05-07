@@ -21,11 +21,18 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Show available destinations
-        run: xcodebuild -scheme PitchMVP -showdestinations
+      - name: Install iOS Platform
+        run: |
+          xcodebuild -downloadPlatform iOS
 
       - name: Resolve Swift Packages
         run: xcodebuild -resolvePackageDependencies
+
+      - name: Show Destinations
+        run: |
+          xcodebuild \
+          -scheme PitchMVP \
+          -showdestinations
 
       - name: Build
         run: |
