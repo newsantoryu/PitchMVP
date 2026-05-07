@@ -9,5 +9,8 @@ import Testing
 
 struct AudioEngineTests {
 
+    @Test func testAppBoots(){
+        #expect(true)
+    }
 
 }

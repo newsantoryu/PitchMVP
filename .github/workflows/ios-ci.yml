@@ -21,6 +21,9 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Show available destinations
+        run: xcodebuild -scheme PitchMVP -showdestinations
+
       - name: Resolve Swift Packages
         run: xcodebuild -resolvePackageDependencies
 
@@ -28,11 +31,14 @@ jobs:
         run: |
           xcodebuild build \
           -scheme PitchMVP \
+          -sdk iphonesimulator \
+          -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
           CODE_SIGNING_ALLOWED=NO
 
-      - name: Run Swift Tests
+      - name: Run Tests
         run: |
           xcodebuild test \
           -scheme PitchMVP \
-          -destination 'platform=iOS Simulator,name=iPhone 16' \
+          -sdk iphonesimulator \
+          -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
           CODE_SIGNING_ALLOWED=NO
