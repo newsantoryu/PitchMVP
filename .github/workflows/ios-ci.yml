@@ -27,4 +27,6 @@ jobs:
         run: |
           xcodebuild build \
           -scheme PitchMVP \
+          -sdk iphonesimulator \
+          -destination 'platform=iOS Simulator,name=iPhone 16' \
           CODE_SIGNING_ALLOWED=NO
