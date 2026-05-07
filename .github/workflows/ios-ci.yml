@@ -24,10 +24,8 @@ jobs:
       - name: Resolve dependencies
         run: xcodebuild -resolvePackageDependencies
 
-      - name: List available destinations
-        run: xcodebuild -scheme PitchMVP -showdestinations
-
       - name: Build
         run: |
           xcodebuild build \
-          -scheme PitchMVP
+          -scheme PitchMVP \
+          CODE_SIGNING_ALLOWED=NO
